@@ -951,19 +951,41 @@
             </div>
         </div>
 
-        <div class="status-abnormal-card" style="margin: 16px 0; padding: 16px; background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.2); border-radius: 16px;">
+        <div class="status-abnormal-card" id="statusAbnormalCard1300" style="margin: 16px 0; padding: 16px; background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.2); border-radius: 16px;">
+            
+            <div class="status-header" style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 700; color: #a78bfa; margin-bottom: 12px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <span>Kondisi Parameter</span>
+            </div>
+            
             <div class="status-options" style="display: flex; flex-wrap: wrap; gap: 8px;">
-                <label class="status-chip" data-status="ERROR">
+                <label class="status-chip" data-status="OFF" style="display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: rgba(30, 41, 59, 0.8); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 24px; cursor: pointer; font-size: 0.8125rem; color: #94a3b8; font-weight: 500;">
+                    <input type="checkbox" name="paramStatus1300" value="OFF" onchange="handle1300StatusChange(this)" style="display: none;">
+                    <span class="chip-text">⚪ MATI / STANDBY</span>
+                </label>
+                
+                <label class="status-chip" data-status="ERROR" style="display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: rgba(30, 41, 59, 0.8); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 24px; cursor: pointer; font-size: 0.8125rem; color: #94a3b8; font-weight: 500;">
                     <input type="checkbox" name="paramStatus1300" value="ERROR" onchange="handle1300StatusChange(this)" style="display: none;">
                     <span class="chip-text">⚠️ ALAT RUSAK</span>
                 </label>
-                <label class="status-chip" data-status="NOT_INSTALLED">
+                
+                <label class="status-chip" data-status="MAINTENANCE" style="display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: rgba(30, 41, 59, 0.8); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 24px; cursor: pointer; font-size: 0.8125rem; color: #94a3b8; font-weight: 500;">
+                    <input type="checkbox" name="paramStatus1300" value="MAINTENANCE" onchange="handle1300StatusChange(this)" style="display: none;">
+                    <span class="chip-text">🔧 PERBAIKAN</span>
+                </label>
+                
+                <label class="status-chip" data-status="NOT_INSTALLED" style="display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: rgba(30, 41, 59, 0.8); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 24px; cursor: pointer; font-size: 0.8125rem; color: #94a3b8; font-weight: 500;">
                     <input type="checkbox" name="paramStatus1300" value="NOT_INSTALLED" onchange="handle1300StatusChange(this)" style="display: none;">
                     <span class="chip-text">❌ BELUM ADA</span>
                 </label>
             </div>
+            
             <div class="status-note" id="statusNoteContainer1300" style="display: none; margin-top: 12px;">
-                <input type="text" id="statusNote1300" placeholder="Keterangan masalah..." style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 8px; color: white; outline: none;">
+                <input type="text" id="statusNote1300" placeholder="Keterangan masalah (opsional)..." style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 8px; color: white; font-size: 0.875rem; outline: none;">
             </div>
         </div>
 
