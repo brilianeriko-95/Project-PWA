@@ -253,10 +253,11 @@ const AREAS_1300 = {
     "CW OUTLET PI-1008-7 (Kg/cm2)",
     "CW OUTLET TI-1301-2 (°C)"
   ],
+
   "1st SO3 ABSORBER": [
     "GAS IN FILTER PP-1008-19 (mmAq)",
     "GAS OUT FILTER PP-1008-20 (mmAq)",
-    "CIRC PUMP LOAD (Amp)",
+    "CIRC PUMP LOAD 1st (Amp)",             // <-- DIPERBARUI
     "DISCHARGE ACID PI-1004-2 (Kg/cm2)",
     "DISCHARGE ACID TI-1302-2 (°C)",
     "ACID OUT PI-1004-4 (Kg/cm2)",
@@ -264,10 +265,11 @@ const AREAS_1300 = {
     "CW OUTLET PI-1006-8 (Kg/cm2)",
     "CW OUTLET TI-1301-3 (°C)"
   ],
+
   "2nd SO3 ABSORBER": [
     "GAS IN FILTER PP-1008-27 (mmAq)",
     "GAS OUT FILTER PP-1008-28 (mmAq)",
-    "CIRC PUMP LOAD (Amp)",
+    "CIRC PUMP LOAD 2nd (Amp)",             // <-- DIPERBARUI
     "DISCHARGE PI-1004-5 (Kg/cm2)",
     "DISCHARGE TI-1302-3 (°C)",
     "ACID OUT PI-1006-5 (Kg/cm2)",
@@ -275,6 +277,7 @@ const AREAS_1300 = {
     "CW OUTLET PI-1006-4 (Kg/cm2)",
     "CW OUTLET TI-1304-4 (°C)"
   ],
+
   "PRODUCT COOLER": [
     "ACID OUT PI-1004-7 (Kg/cm2)",
     "ACID OUTLET TI-1001-9 (°C)",
@@ -282,33 +285,38 @@ const AREAS_1300 = {
     "CW OUTLET PI-1006-11 (Kg/cm2)",
     "CW OUTLET TI-1301-5 (°C)"
   ],
+
   "FLOW PRODUCT": [
     "FLOW FI-1304 (Ton/jam)",
     "TOTALIZER FIQ-1304 (Ton)"
   ],
+
   "CW HEADER": [
     "TEMP INLET TI-1301-6 (°C)",
     "TEMP OUTLET TI-1301-1 (°C)",
     "PH OUTLET AT-1103"
   ],
+
   "BLOWER MC-C-1302": [
-    "LOAD (Amp)",
+    "LOAD MC-C-1302 (Amp)",                 // <-- DIPERBARUI
     "SUCTION HV-1302-1 (%)",
     "GUIDE VANE HV-1302-2 (%)",
-    "POINTER (%)",
+    "POINTER 1302 (%)",                     // <-- DIPERBARUI
     "VENTING HCV-1304 (%)",
     "PT-1304 (%)"
   ],
+
   "BLOWER MC-C-1301": [
-    "LOAD (Amp)",
+    "LOAD MC-C-1301 (Amp)",                 // <-- DIPERBARUI
     "SUCTION HV-1301-1 (%)",
     "GUIDE VANE HV-1301-2 (%)",
-    "POINTER (%)",
+    "POINTER 1301 (%)",                     // <-- DIPERBARUI
     "VENTING HCV-1303 (%)",
     "DISCHARGE HV-1301 (%)",
     "PT-1301 (Kg/cm2)",
     "PT-1303 (Kg/cm2)"
   ],
+
   "LUBE OIL SYSTEM": [
     "PRESSURE PI-1331 (Kg/cm2)",
     "PRESSURE PI-1332 (Kg/cm2)",
@@ -326,11 +334,6 @@ const AREAS_1300 = {
   ]
 };
 
-// Tambahkan Key Draft di DRAFT_KEYS_1300
-const DRAFT_KEYS_1300 = {
-    LOGSHEET: 'draft_1300_logsheet',
-    OFFLINE: 'offline_1300_logsheets'
-};
 const INPUT_TYPES = {
     PUMP_STATUS: {
         patterns: ['(A/B)', '(ON/OFF)', '(On/Off)', '(Running/Stop)', '(Remote/Running/Stop)'],
