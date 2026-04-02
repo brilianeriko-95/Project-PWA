@@ -1456,3 +1456,410 @@ function clearCTParamPhotosForArea(areaName) {
         saveCTParamPhotosToDraft();
     }
 }
+// ============================================
+// 3. AREA 1300 LOGSHEET FUNCTIONS
+// ============================================
+function fetchLastData1300() {
+    updateStatusIndicator(false);
+    const timeout = setTimeout(() => render1300Menu(), 8000);
+    const callbackName = 'jsonp_1300_' + Date.now();
+    
+    window[callbackName] = (data) => {
+        clearTimeout(timeout);
+        lastData1300 = data.success ? data.data : {}; 
+        updateStatusIndicator(true);
+        cleanupJSONP(callbackName);
+        render1300Menu();
+    };
+    
+    const script = document.createElement('script');
+    script.src = `${GAS_URL}?action=getLast1300&callback=${callbackName}`;
+    script.onerror = () => {
+        clearTimeout(timeout);
+        cleanupJSONP(callbackName);
+        render1300Menu();
+    };
+    document.body.appendChild(script);
+}
+
+function render1300Menu() {
+    const list = document.getElementById('1300AreaList');
+    if (!list) return;
+    
+    const totalAreas = Object.keys(AREAS_1300).length;
+    let completedAreas = 0;
+    let html = '';
+    
+    Object.entries(AREAS_1300).forEach(([areaName, params]) => {
+        const areaData = currentInput1300[areaName] || {};
+        const filled = Object.keys(areaData).length;
+        const total = params.length;
+        const percent = Math.round((filled / total) * 100);
+        const isCompleted = filled === total && total > 0;
+        
+        const hasAbnormal = params.some(paramName => {
+            const val = areaData[paramName] || '';
+            const firstLine = val.split('\n')[0];
+            return ['ERROR', 'MAINTENANCE'].includes(firstLine);
+        });
+        
+        if (isCompleted) completedAreas++;
+        
+        const circumference = 2 * Math.PI * 18;
+        const strokeDashoffset = circumference - (percent / 100) * circumference;
+        
+        html += `
+            <div class="area-item ${isCompleted ? 'completed' : ''} ${hasAbnormal ? 'has-warning' : ''}" onclick="open1300Area('${areaName}')">
+                <div class="area-progress-ring">
+                    <svg width="40" height="40" viewBox="0 0 40 40">
+                        <circle cx="20" cy="20" r="18" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3"/>
+                        <circle cx="20" cy="20" r="18" fill="none" stroke="${isCompleted ? '#10b981' : '#f59e0b'}" 
+                                stroke-width="3" stroke-linecap="round" stroke-dasharray="${circumference}" 
+                                stroke-dashoffset="${strokeDashoffset}" transform="rotate(-90 20 20)"/>
+                        <text x="20" y="24" text-anchor="middle" font-size="10" font-weight="bold" fill="${isCompleted ? '#10b981' : '#f8fafc'}">${filled}</text>
+                    </svg>
+                </div>
+                <div class="area-info">
+                    <div class="area-name">${areaName}</div>
+                    <div class="area-meta ${hasAbnormal ? 'warning' : ''}">
+                        ${hasAbnormal ? '⚠️ Ada masalah • ' : ''}${filled} dari ${total} parameter
+                    </div>
+                </div>
+                <div class="area-status">
+                    ${hasAbnormal ? '<span style="color: #ef4444; margin-right: 4px;">!</span>' : ''}
+                    ${isCompleted ? '✓' : '❯'}
+                </div>
+            </div>
+        `;
+    });
+    
+    list.innerHTML = html;
+    
+    const hasData = Object.keys(currentInput1300).length > 0;
+    const submitBtn = document.getElementById('1300SubmitBtn');
+    if (submitBtn) submitBtn.style.display = hasData ? 'flex' : 'none';
+    
+    update1300OverallProgressUI(completedAreas, totalAreas);
+}
+
+function update1300OverallProgressUI(completedAreas, totalAreas) {
+    const percent = Math.round((completedAreas / totalAreas) * 100);
+    const progressText = document.getElementById('1300ProgressText');
+    const overallPercent = document.getElementById('1300OverallPercent');
+    const overallProgressBar = document.getElementById('1300OverallProgressBar');
+    
+    if (progressText) progressText.textContent = `${percent}% Complete`;
+    if (overallPercent) overallPercent.textContent = `${percent}%`;
+    if (overallProgressBar) overallProgressBar.style.width = `${percent}%`;
+}
+
+function open1300Area(areaName) {
+    if (!requireAuth()) return;
+    
+    activeArea1300 = areaName;
+    activeIdx1300 = 0;
+    
+    // load1300ParamPhotosFromDraft(); // (Opsional jika pakai fitur foto 1300)
+    navigateTo('1300ParamScreen');
+    
+    const currentAreaName = document.getElementById('1300CurrentAreaName');
+    if (currentAreaName) currentAreaName.textContent = areaName;
+    render1300ProgressDots();
+    show1300Step();
+}
+
+function render1300ProgressDots() {
+    const container = document.getElementById('1300ProgressDots');
+    if (!container) return;
+    const total = AREAS_1300[activeArea1300].length;
+    let html = '';
+    
+    for (let i = 0; i < total; i++) {
+        const fullLabel = AREAS_1300[activeArea1300][i];
+        const savedValue = currentInput1300[activeArea1300]?.[fullLabel] || '';
+        const lines = savedValue.split('\n');
+        const firstLine = lines[0];
+        
+        const isFilled = savedValue !== '';
+        const hasIssue = ['ERROR', 'MAINTENANCE'].includes(firstLine);
+        const isActive = i === activeIdx1300;
+        
+        let className = '';
+        if (isActive) className = 'active';
+        else if (hasIssue) className = 'has-issue';
+        else if (isFilled) className = 'filled';
+        
+        html += `<div class="progress-dot ${className}" onclick="jumpTo1300Step(${i})" title="${hasIssue ? firstLine : ''}"></div>`;
+    }
+    container.innerHTML = html;
+}
+
+function jumpTo1300Step(index) {
+    saveCurrent1300StatusToDraft();
+    activeIdx1300 = index;
+    show1300Step();
+    render1300ProgressDots();
+}
+
+function get1300Unit(label) {
+    const match = label.match(/\(([^)]+)\)/);
+    return match ? match[1] : "";
+}
+
+function get1300ParamName(label) {
+    return label.split(' (')[0];
+}
+
+function show1300Step() {
+    const fullLabel = AREAS_1300[activeArea1300][activeIdx1300];
+    const total = AREAS_1300[activeArea1300].length;
+    
+    const stepInfo = document.getElementById('1300StepInfo');
+    const areaProgress = document.getElementById('1300AreaProgress');
+    const labelInput = document.getElementById('1300LabelInput');
+    const lastTimeLabel = document.getElementById('1300LastTimeLabel');
+    const prevValDisplay = document.getElementById('1300PrevValDisplay');
+    const inputFieldContainer = document.getElementById('1300InputFieldContainer');
+    const unitDisplay = document.getElementById('1300UnitDisplay');
+    
+    if (stepInfo) stepInfo.textContent = `Step ${activeIdx1300 + 1}/${total}`;
+    if (areaProgress) areaProgress.textContent = `${activeIdx1300 + 1}/${total}`;
+    if (labelInput) labelInput.textContent = get1300ParamName(fullLabel);
+    if (lastTimeLabel) lastTimeLabel.textContent = lastData1300._lastTime || '--:--';
+    
+    let prevVal = lastData1300[fullLabel] || '--';
+    if (prevVal !== '--') {
+        const lines = prevVal.toString().split('\n');
+        const firstLine = lines[0];
+        if (['ERROR', 'MAINTENANCE'].includes(firstLine)) {
+            prevVal = firstLine + (lines[1] ? ' - ' + lines[1] : '');
+        }
+    }
+    if (prevValDisplay) prevValDisplay.textContent = prevVal;
+    
+    let currentValue = (currentInput1300[activeArea1300] && currentInput1300[activeArea1300][fullLabel]) || '';
+    if (currentValue) {
+        const lines = currentValue.split('\n');
+        const firstLine = lines[0];
+        if (!['ERROR', 'MAINTENANCE'].includes(firstLine)) {
+            currentValue = firstLine;
+        } else {
+            currentValue = '';
+        }
+    }
+    
+    if (inputFieldContainer) {
+        // Asumsi semua input 1300 adalah angka/teks
+        inputFieldContainer.innerHTML = `<input type="text" id="1300ValInput" inputmode="decimal" placeholder="0.00" value="${currentValue}" autocomplete="off" style="width: 100%; background: transparent; border: none; color: #f8fafc; font-size: 1.5rem; font-weight: 700; outline: none;">`;
+    }
+    
+    if (unitDisplay) {
+        unitDisplay.textContent = get1300Unit(fullLabel) || '--';
+    }
+    
+    load1300AbnormalStatus(fullLabel);
+    render1300ProgressDots();
+    
+    setTimeout(() => {
+        const input = document.getElementById('1300ValInput');
+        if (input && !input.disabled) {
+            input.focus();
+            input.select();
+        }
+    }, 100);
+}
+
+function handle1300StatusChange(checkbox) {
+    const chip = checkbox.closest('.status-chip');
+    const noteContainer = document.getElementById('1300StatusNoteContainer');
+    const valInput = document.getElementById('1300ValInput');
+    
+    document.querySelectorAll('input[name="1300ParamStatus"]').forEach(cb => {
+        if (cb !== checkbox) {
+            cb.checked = false;
+            cb.closest('.status-chip').classList.remove('active');
+        }
+    });
+    
+    if (checkbox.checked) {
+        chip.classList.add('active');
+        if (noteContainer) noteContainer.style.display = 'block';
+        
+        setTimeout(() => {
+            document.getElementById('1300StatusNote')?.focus();
+        }, 100);
+        
+    } else {
+        chip.classList.remove('active');
+        if (noteContainer) noteContainer.style.display = 'none';
+        const noteInput = document.getElementById('1300StatusNote');
+        if (noteInput) noteInput.value = '';
+        
+        if (valInput) {
+            valInput.value = '';
+            valInput.disabled = false;
+            valInput.style.opacity = '1';
+            valInput.style.background = '';
+            valInput.focus();
+        }
+    }
+    
+    saveCurrent1300StatusToDraft();
+}
+
+function load1300AbnormalStatus(fullLabel) {
+    document.querySelectorAll('input[name="1300ParamStatus"]').forEach(cb => {
+        cb.checked = false;
+        cb.closest('.status-chip').classList.remove('active');
+    });
+    
+    const noteContainer = document.getElementById('1300StatusNoteContainer');
+    const noteInput = document.getElementById('1300StatusNote');
+    const valInput = document.getElementById('1300ValInput');
+    
+    if (noteContainer) noteContainer.style.display = 'none';
+    if (noteInput) noteInput.value = '';
+    
+    if (valInput) {
+        valInput.disabled = false;
+        valInput.style.opacity = '1';
+        valInput.style.background = '';
+    }
+    
+    if (currentInput1300[activeArea1300] && currentInput1300[activeArea1300][fullLabel]) {
+        const savedValue = currentInput1300[activeArea1300][fullLabel];
+        const lines = savedValue.split('\n');
+        const firstLine = lines[0];
+        const secondLine = lines[1] || '';
+        
+        const isStatus = ['ERROR', 'MAINTENANCE'].includes(firstLine);
+        
+        if (isStatus) {
+            const checkbox = document.querySelector(`input[name="1300ParamStatus"][value="${firstLine}"]`);
+            if (checkbox) {
+                checkbox.checked = true;
+                checkbox.closest('.status-chip').classList.add('active');
+                if (noteContainer) noteContainer.style.display = 'block';
+                if (noteInput) noteInput.value = secondLine;
+                
+                if (valInput) {
+                    valInput.value = '-';
+                    valInput.disabled = true;
+                    valInput.style.opacity = '0.5';
+                }
+            }
+        }
+    }
+}
+
+function saveCurrent1300StatusToDraft() {
+    const fullLabel = AREAS_1300[activeArea1300][activeIdx1300];
+    const input = document.getElementById('1300ValInput');
+    const checkedStatus = document.querySelector('input[name="1300ParamStatus"]:checked');
+    const note = document.getElementById('1300StatusNote')?.value || '';
+    
+    if (!currentInput1300[activeArea1300]) currentInput1300[activeArea1300] = {};
+    
+    let valueToSave = '';
+    if (input && input.value.trim() && !input.disabled) {
+        valueToSave = input.value.trim();
+    }
+    
+    if (checkedStatus) {
+        if (note) {
+            valueToSave = `${checkedStatus.value}\n${note}`;
+        } else {
+            valueToSave = checkedStatus.value;
+        }
+    }
+    
+    if (valueToSave) {
+        currentInput1300[activeArea1300][fullLabel] = valueToSave;
+    } else {
+        delete currentInput1300[activeArea1300][fullLabel];
+    }
+    
+    localStorage.setItem(DRAFT_KEYS_1300.LOGSHEET, JSON.stringify(currentInput1300));
+    render1300ProgressDots();
+}
+
+function save1300Step() {
+    saveCurrent1300StatusToDraft();
+    
+    if (activeIdx1300 < AREAS_1300[activeArea1300].length - 1) {
+        activeIdx1300++;
+        show1300Step();
+    } else {
+        showCustomAlert(`Area ${activeArea1300} selesai diisi!`, 'success');
+        setTimeout(() => navigateTo('1300AreaListScreen'), 1500);
+    }
+}
+
+function goBack1300() {
+    saveCurrent1300StatusToDraft();
+    
+    if (activeIdx1300 > 0) {
+        activeIdx1300--;
+        show1300Step();
+    } else {
+        navigateTo('1300AreaListScreen');
+    }
+}
+
+async function send1300ToSheet() {
+    if (!requireAuth()) return;
+    
+    const progress = showUploadProgress('Mengirim Logsheet 1300...');
+    currentUploadController = new AbortController();
+    
+    let allParameters = {};
+    Object.entries(currentInput1300).forEach(([areaName, params]) => {
+        Object.entries(params).forEach(([paramName, value]) => {
+            allParameters[paramName] = value;
+        });
+    });
+    
+    const finalData = {
+        type: 'LOGSHEET_1300',
+        Operator: currentUser ? currentUser.name : 'Unknown',
+        OperatorId: currentUser ? currentUser.id : 'Unknown',
+        photoCount: 0, 
+        ...allParameters
+    };
+    
+    progress.updateText('Mengirim data parameter 1300...');
+    
+    try {
+        await fetch(GAS_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(finalData),
+            signal: currentUploadController.signal
+        });
+        
+        progress.complete();
+        showCustomAlert('✓ Data Area 1300 berhasil dikirim ke sistem!', 'success');
+        
+        currentInput1300 = {};
+        localStorage.removeItem(DRAFT_KEYS_1300.LOGSHEET);
+        
+        setTimeout(() => navigateTo('homeScreen'), 1500);
+        
+    } catch (error) {
+        console.error('Error sending 1300 data:', error);
+        progress.error();
+        
+        let offlineData = JSON.parse(localStorage.getItem(DRAFT_KEYS_1300.OFFLINE) || '[]');
+        offlineData.push(finalData);
+        localStorage.setItem(DRAFT_KEYS_1300.OFFLINE, JSON.stringify(offlineData));
+        
+        setTimeout(() => {
+            showCustomAlert('Gagal mengirim. Data disimpan lokal.', 'error');
+        }, 500);
+    }
+}
+
+function handle1300ParamPhoto(event) {
+    showCustomAlert('Fitur kamera Area 1300 saat ini hanya bersifat opsional.', 'info');
+}
