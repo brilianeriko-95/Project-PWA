@@ -4,7 +4,7 @@
 
 // UPDATE MANUAL: Ubah nilai versi ini setiap kali Anda merilis pembaruan.
 // Perubahan pada file sw.js ini akan memicu browser untuk mendeteksi versi baru.
-const VERSION = '2.3.3'; 
+const VERSION = '2.3.4'; // Versi dinaikkan untuk memaksa browser update cache
 const CACHE_NAME = `turbine-logsheets-v${VERSION}`;
 
 // ============================================
@@ -33,17 +33,18 @@ const ASSETS = [
     './js/balancing.js',
     './js/main.js',
     
-    // PWA Icons (Lengkap sesuai manifest)
-    './icon-16x16.png',
-    './icon-32x32.png',
-    './icon-72x72.png',
-    './icon-96x96.png',
-    './icon-128x128.png',
-    './icon-144x144.png',
-    './icon-152x152.png',
-    './icon-192x192.png',
-    './icon-384x384.png',
-    './icon-512x512.png'
+    // PWA Icons (Diperbaiki path-nya mengarah ke folder icons/)
+    // PASTIKAN SEMUA FILE INI BENAR-BENAR ADA DI FOLDER 'icons'
+    './icons/icon-48x48.png',
+    './icons/icon-72x72.png',
+    './icons/icon-96x96.png',
+    './icons/icon-128x128.png',
+    './icons/icon-144x144.png',
+    './icons/icon-152x152.png',
+    './icons/icon-192x192.png',
+    './icons/icon-256x256.png',
+    './icons/icon-384x384.png',
+    './icons/icon-512x512.png'
 ];
 
 // ============================================
