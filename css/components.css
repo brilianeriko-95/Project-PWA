@@ -303,7 +303,12 @@
 .status-chip.active { background: rgba(239, 68, 68, 0.2); border-color: var(--danger); color: var(--danger-light); font-weight: 600; }
 #ctParamScreen .status-chip.active { background: rgba(6, 182, 212, 0.2); border-color: var(--info); color: var(--info); }
 .status-chip input { display: none; }
-
+/* Khusus untuk status terpilih (Active) di Logsheet 1300 (Warna Ungu) */
+#statusAbnormalCard1300 .status-chip.active {
+    background: rgba(139, 92, 246, 0.1) !important;
+    border-color: #8b5cf6 !important;
+    color: #8b5cf6 !important;
+}
 /* Badges */
 .shift-badge { display: inline-block; padding: var(--xs) var(--lg); background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%); color: white; border-radius: var(--radius-full); font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.1em; box-shadow: var(--shadow-warning); }
 .limit-badge { padding: var(--xs) var(--sm); background: rgba(239, 68, 68, 0.1); color: var(--danger); border-radius: var(--radius-sm); font-size: 0.6875rem; font-weight: 700; white-space: nowrap; }
@@ -322,3 +327,4 @@
 }
 .user-pill span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .version-tag { display: inline-flex; align-items: center; gap: var(--xs); padding: var(--xs) var(--md); background: rgba(59, 130, 246, 0.1); color: var(--primary-light); border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(59, 130, 246, 0.2); }
+
