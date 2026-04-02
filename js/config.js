@@ -32,9 +32,15 @@ const DRAFT_KEYS_CT = {
     OFFLINE: 'offline_ct_logsheets'
 };
 
+const DRAFT_KEYS_1300 = {
+    LOGSHEET: 'draft_1300_logsheet',
+    OFFLINE: 'offline_1300_logsheets'
+};
+
 const PHOTO_DRAFT_KEYS = {
     TURBINE: 'draft_turbine_photos',
-    CT: 'draft_ct_photos'
+    CT: 'draft_ct_photos',
+    AREA1300: 'draft_1300_photos'
 };
 
 // URL Google Apps Script Backend
@@ -233,7 +239,98 @@ const AREAS_CT = {
         "MT-6521 D STATUS"
     ]
 };
+// Tambahkan di bagian bawah setelah AREAS_CT atau sebelum INPUT_TYPES
+const AREAS_1300 = {
+  "DRYING AIR": [
+    "AIR INLET PI-1007-1 (mmAq)",
+    "AIR INLET FILTER PP-1008-1 (mmAq)",
+    "AIR OUT FILTER PP-1008-2 (mmAq)",
+    "CIRC PUMP LOAD (Amp)",
+    "PUMP DISCHARGE PI-1004-1 (Kg/cm2)",
+    "PUMP DISCHARGE TI-1302-1 (°C)",
+    "ACID OUT PI-1004-9 (Kg/cm2)",
+    "CW INLET PI-1005-2 (Kg/cm2)",
+    "CW OUTLET PI-1008-7 (Kg/cm2)",
+    "CW OUTLET TI-1301-2 (°C)"
+  ],
+  "1st SO3 ABSORBER": [
+    "GAS IN FILTER PP-1008-19 (mmAq)",
+    "GAS OUT FILTER PP-1008-20 (mmAq)",
+    "CIRC PUMP LOAD (Amp)",
+    "DISCHARGE ACID PI-1004-2 (Kg/cm2)",
+    "DISCHARGE ACID TI-1302-2 (°C)",
+    "ACID OUT PI-1004-4 (Kg/cm2)",
+    "CW INLET PP-1008-11 (Kg/cm2)",
+    "CW OUTLET PI-1006-8 (Kg/cm2)",
+    "CW OUTLET TI-1301-3 (°C)"
+  ],
+  "2nd SO3 ABSORBER": [
+    "GAS IN FILTER PP-1008-27 (mmAq)",
+    "GAS OUT FILTER PP-1008-28 (mmAq)",
+    "CIRC PUMP LOAD (Amp)",
+    "DISCHARGE PI-1004-5 (Kg/cm2)",
+    "DISCHARGE TI-1302-3 (°C)",
+    "ACID OUT PI-1006-5 (Kg/cm2)",
+    "CW INLET PI-1006-9 (Kg/cm2)",
+    "CW OUTLET PI-1006-4 (Kg/cm2)",
+    "CW OUTLET TI-1304-4 (°C)"
+  ],
+  "PRODUCT COOLER": [
+    "ACID OUT PI-1004-7 (Kg/cm2)",
+    "ACID OUTLET TI-1001-9 (°C)",
+    "CW INLET PI-1006-10 (Kg/cm2)",
+    "CW OUTLET PI-1006-11 (Kg/cm2)",
+    "CW OUTLET TI-1301-5 (°C)"
+  ],
+  "FLOW PRODUCT": [
+    "FLOW FI-1304 (Ton/jam)",
+    "TOTALIZER FIQ-1304 (Ton)"
+  ],
+  "CW HEADER": [
+    "TEMP INLET TI-1301-6 (°C)",
+    "TEMP OUTLET TI-1301-1 (°C)",
+    "PH OUTLET AT-1103"
+  ],
+  "BLOWER MC-C-1302": [
+    "LOAD (Amp)",
+    "SUCTION HV-1302-1 (%)",
+    "GUIDE VANE HV-1302-2 (%)",
+    "POINTER (%)",
+    "VENTING HCV-1304 (%)",
+    "PT-1304 (%)"
+  ],
+  "BLOWER MC-C-1301": [
+    "LOAD (Amp)",
+    "SUCTION HV-1301-1 (%)",
+    "GUIDE VANE HV-1301-2 (%)",
+    "POINTER (%)",
+    "VENTING HCV-1303 (%)",
+    "DISCHARGE HV-1301 (%)",
+    "PT-1301 (Kg/cm2)",
+    "PT-1303 (Kg/cm2)"
+  ],
+  "LUBE OIL SYSTEM": [
+    "PRESSURE PI-1331 (Kg/cm2)",
+    "PRESSURE PI-1332 (Kg/cm2)",
+    "PRESSURE PI-133-A (Kg/cm2)",
+    "PRESSURE PI-133-B (Kg/cm2)",
+    "PRESSURE PI-133-C (Kg/cm2)",
+    "TEMP TI-1337 (°C)",
+    "TEMP TI-1338 (°C)",
+    "FLOW FI-1337 (m3/h)",
+    "FLOW FI-1338 (m3/h)",
+    "FLOW FI-1341 (m3/h)",
+    "FLOW FI-1342 (m3/h)",
+    "PRESSURE PIT-1340 (Kg/cm2)",
+    "LEVEL TANK (%)"
+  ]
+};
 
+// Tambahkan Key Draft di DRAFT_KEYS_1300
+const DRAFT_KEYS_1300 = {
+    LOGSHEET: 'draft_1300_logsheet',
+    OFFLINE: 'offline_1300_logsheets'
+};
 const INPUT_TYPES = {
     PUMP_STATUS: {
         patterns: ['(A/B)', '(ON/OFF)', '(On/Off)', '(Running/Stop)', '(Remote/Running/Stop)'],
