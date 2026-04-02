@@ -285,7 +285,24 @@ function goToLogsheetCT() {
         renderCTMenu();
     }
 }
-
+// === TAMBAHKAN KODE ANDA DI SINI ===
+function goToLogsheet1300() {
+    if (!requireAuth()) return;
+    document.getElementById('1300AreaListUser').textContent = currentUser.name;
+    
+    // Load draft dari local storage
+    const draft = localStorage.getItem(DRAFT_KEYS_1300.LOGSHEET);
+    if (draft) {
+        currentInput1300 = JSON.parse(draft);
+    }
+    
+    navigateTo('1300AreaListScreen'); // Pastikan ID ini sama dengan ID di index.html Anda
+    if (typeof fetchLastData1300 === 'function') {
+        fetchLastData1300();
+    } else if (typeof render1300Menu === 'function') {
+        render1300Menu();
+    }
+}
 function goToBalancing() {
     navigateTo('balancingScreen');
     if (typeof initBalancingScreen === 'function') {
