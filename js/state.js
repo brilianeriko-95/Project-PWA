@@ -56,7 +56,15 @@ let totalParamsCT = 0;
 let currentInputTypeCT = 'text';
 
 // ============================================
-// 8. PHOTO VALIDATION STATE (TURBINE & CT)
+// 8. 1300 LOGSHEET STATE
+// ============================================
+let currentInput1300 = {};
+let activeArea1300 = null;
+let activeIdx1300 = 0;
+let currentInputType1300 = 'text';
+let lastData1300 = {};
+// ============================================
+// 9. PHOTO VALIDATION STATE (TURBINE & CT)
 // ============================================
 // Foto untuk parameter Turbine
 let currentParamPhoto = null;  // Foto yang sedang aktif diambil
@@ -65,3 +73,7 @@ let paramPhotos = {};          // Format: { areaName: { paramName: photoData } }
 // Foto untuk parameter CT
 let currentCTParamPhoto = null; // Foto CT yang sedang aktif diambil
 let ctParamPhotos = {};        // Format: { areaName: { paramName: photoData } }
+
+// Untuk foto
+let paramPhotos1300 = {};
+let currentParamPhoto1300 = null;
