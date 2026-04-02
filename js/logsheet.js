@@ -1456,3 +1456,354 @@ function clearCTParamPhotosForArea(areaName) {
         saveCTParamPhotosToDraft();
     }
 }
+/* ============================================
+   4. AREA 1300 LOGSHEET FUNCTIONS
+   ============================================ */
+
+function goToLogsheet1300() {
+    if (!requireAuth()) return;
+    
+    try {
+        const saved = localStorage.getItem(DRAFT_KEYS_1300.LOGSHEET);
+        if (saved) currentInput1300 = JSON.parse(saved);
+    } catch (e) {
+        currentInput1300 = {};
+    }
+    
+    navigateTo('areaList1300Screen');
+    render1300Menu();
+}
+
+function render1300Menu() {
+    const list = document.getElementById('areaList1300');
+    if (!list) return;
+    
+    const totalAreas = Object.keys(AREAS_1300).length;
+    let completedAreas = 0;
+    let html = '';
+    
+    Object.entries(AREAS_1300).forEach(([areaName, params]) => {
+        const areaData = currentInput1300[areaName] || {};
+        const filled = Object.keys(areaData).length;
+        const total = params.length;
+        const percent = Math.round((filled / total) * 100);
+        const isCompleted = filled === total && total > 0;
+        
+        const hasAbnormal = params.some(paramName => {
+            const val = areaData[paramName] || '';
+            const firstLine = val.split('\n')[0];
+            return ['ERROR', 'NOT_INSTALLED'].includes(firstLine);
+        });
+        
+        if (isCompleted) completedAreas++;
+        
+        const circumference = 2 * Math.PI * 18;
+        const strokeDashoffset = circumference - (percent / 100) * circumference;
+        
+        html += `
+            <div class="area-item ${isCompleted ? 'completed' : ''} ${hasAbnormal ? 'has-warning' : ''}" onclick="open1300Area('${areaName}')">
+                <div class="area-progress-ring">
+                    <svg width="40" height="40" viewBox="0 0 40 40">
+                        <circle cx="20" cy="20" r="18" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3"/>
+                        <circle cx="20" cy="20" r="18" fill="none" stroke="${isCompleted ? '#10b981' : '#8b5cf6'}" 
+                                stroke-width="3" stroke-linecap="round" stroke-dasharray="${circumference}" 
+                                stroke-dashoffset="${strokeDashoffset}" transform="rotate(-90 20 20)"/>
+                        <text x="20" y="24" text-anchor="middle" font-size="10" font-weight="bold" fill="${isCompleted ? '#10b981' : '#f8fafc'}">${filled}</text>
+                    </svg>
+                </div>
+                <div class="area-info">
+                    <div class="area-name">${areaName}</div>
+                    <div class="area-meta ${hasAbnormal ? 'warning' : ''}">
+                        ${hasAbnormal ? '⚠️ Ada parameter bermasalah • ' : ''}${filled} dari ${total} parameter
+                    </div>
+                </div>
+                <div class="area-status">
+                    ${hasAbnormal ? '<span style="color: #ef4444; margin-right: 4px;">!</span>' : ''}
+                    ${isCompleted ? '✓' : '❯'}
+                </div>
+            </div>
+        `;
+    });
+    
+    list.innerHTML = html;
+    
+    const hasData = Object.keys(currentInput1300).length > 0;
+    const submitBtn = document.getElementById('submit1300Btn');
+    if (submitBtn) submitBtn.style.display = hasData ? 'flex' : 'none';
+    
+    // Update progress bar
+    const percent = Math.round((completedAreas / totalAreas) * 100);
+    document.getElementById('progress1300Text').textContent = `${percent}% Complete`;
+    document.getElementById('overall1300Percent').textContent = `${percent}%`;
+    document.getElementById('overall1300ProgressBar').style.width = `${percent}%`;
+}
+
+function open1300Area(areaName) {
+    if (!requireAuth()) return;
+    activeArea1300 = areaName;
+    activeIdx1300 = 0;
+    
+    navigateTo('param1300Screen');
+    document.getElementById('currentAreaName1300').textContent = areaName;
+    render1300ProgressDots();
+    show1300Step();
+}
+
+function render1300ProgressDots() {
+    const container = document.getElementById('progressDots1300');
+    if (!container) return;
+    const total = AREAS_1300[activeArea1300].length;
+    let html = '';
+    
+    for (let i = 0; i < total; i++) {
+        const fullLabel = AREAS_1300[activeArea1300][i];
+        const savedValue = currentInput1300[activeArea1300]?.[fullLabel] || '';
+        const lines = savedValue.split('\n');
+        const firstLine = lines[0];
+        
+        const isFilled = savedValue !== '';
+        const hasIssue = ['ERROR', 'NOT_INSTALLED'].includes(firstLine);
+        const isActive = i === activeIdx1300;
+        
+        let className = isActive ? 'active' : (hasIssue ? 'has-issue' : (isFilled ? 'filled' : ''));
+        html += `<div class="progress-dot ${className}" onclick="jumpTo1300Step(${i})" title="${hasIssue ? firstLine : ''}"></div>`;
+    }
+    container.innerHTML = html;
+}
+
+function jumpTo1300Step(index) {
+    saveCurrent1300StatusToDraft();
+    activeIdx1300 = index;
+    show1300Step();
+    render1300ProgressDots();
+}
+
+function show1300Step() {
+    const fullLabel = AREAS_1300[activeArea1300][activeIdx1300];
+    const total = AREAS_1300[activeArea1300].length;
+    
+    document.getElementById('stepInfo1300').textContent = `Step ${activeIdx1300 + 1}/${total}`;
+    document.getElementById('areaProgress1300').textContent = `${activeIdx1300 + 1}/${total}`;
+    
+    // Pecah unit dari label "(Kg/cm2)" dsb
+    const nameMatch = fullLabel.split(' (')[0];
+    const unitMatch = fullLabel.match(/\(([^)]+)\)/);
+    
+    document.getElementById('labelInput1300').textContent = nameMatch;
+    
+    let currentValue = (currentInput1300[activeArea1300] && currentInput1300[activeArea1300][fullLabel]) || '';
+    if (currentValue) {
+        const lines = currentValue.split('\n');
+        const firstLine = lines[0];
+        if (!['ERROR', 'NOT_INSTALLED'].includes(firstLine)) {
+            currentValue = firstLine;
+        } else {
+            currentValue = '';
+        }
+    }
+    
+    const inputContainer = document.getElementById('inputFieldContainer1300');
+    inputContainer.innerHTML = `<input type="text" id="valInput1300" inputmode="decimal" placeholder="0.00" value="${currentValue}" autocomplete="off" style="width: 100%; background: transparent; border: none; color: #f8fafc; font-size: 1.5rem; font-weight: 700; outline: none;">`;
+    
+    const unitDisplay = document.getElementById('unitDisplay1300');
+    if (unitMatch) {
+        unitDisplay.textContent = unitMatch[1];
+        unitDisplay.style.display = 'flex';
+    } else {
+        unitDisplay.style.display = 'none';
+    }
+    
+    load1300AbnormalStatus(fullLabel);
+    render1300ProgressDots();
+    
+    setTimeout(() => {
+        const input = document.getElementById('valInput1300');
+        if (input && !input.disabled) {
+            input.focus();
+            input.select();
+        }
+    }, 100);
+}
+
+function handle1300StatusChange(checkbox) {
+    const chip = checkbox.closest('.status-chip');
+    const noteContainer = document.getElementById('statusNoteContainer1300');
+    const valInput = document.getElementById('valInput1300');
+    
+    document.querySelectorAll('input[name="paramStatus1300"]').forEach(cb => {
+        if (cb !== checkbox) {
+            cb.checked = false;
+            cb.closest('.status-chip').classList.remove('active');
+        }
+    });
+    
+    if (checkbox.checked) {
+        chip.classList.add('active');
+        noteContainer.style.display = 'block';
+        
+        if (checkbox.value === 'NOT_INSTALLED' && valInput) {
+            valInput.value = '-';
+            valInput.disabled = true;
+            valInput.style.opacity = '0.5';
+        }
+    } else {
+        chip.classList.remove('active');
+        noteContainer.style.display = 'none';
+        document.getElementById('statusNote1300').value = '';
+        
+        if (valInput) {
+            valInput.value = '';
+            valInput.disabled = false;
+            valInput.style.opacity = '1';
+            valInput.focus();
+        }
+    }
+    saveCurrent1300StatusToDraft();
+}
+
+function saveCurrent1300StatusToDraft() {
+    const fullLabel = AREAS_1300[activeArea1300][activeIdx1300];
+    const input = document.getElementById('valInput1300');
+    const checkedStatus = document.querySelector('input[name="paramStatus1300"]:checked');
+    const note = document.getElementById('statusNote1300')?.value || '';
+    
+    if (!currentInput1300[activeArea1300]) currentInput1300[activeArea1300] = {};
+    
+    let valueToSave = '';
+    if (input && input.value.trim()) {
+        valueToSave = input.value.trim();
+    }
+    
+    if (checkedStatus) {
+        valueToSave = note ? `${checkedStatus.value}\n${note}` : checkedStatus.value;
+    }
+    
+    if (valueToSave) {
+        currentInput1300[activeArea1300][fullLabel] = valueToSave;
+    } else {
+        delete currentInput1300[activeArea1300][fullLabel];
+    }
+    
+    localStorage.setItem(DRAFT_KEYS_1300.LOGSHEET, JSON.stringify(currentInput1300));
+}
+
+function load1300AbnormalStatus(fullLabel) {
+    document.querySelectorAll('input[name="paramStatus1300"]').forEach(cb => {
+        cb.checked = false;
+        cb.closest('.status-chip').classList.remove('active');
+    });
+    
+    const noteContainer = document.getElementById('statusNoteContainer1300');
+    const noteInput = document.getElementById('statusNote1300');
+    const valInput = document.getElementById('valInput1300');
+    
+    noteContainer.style.display = 'none';
+    noteInput.value = '';
+    
+    if (valInput) {
+        valInput.disabled = false;
+        valInput.style.opacity = '1';
+    }
+    
+    if (currentInput1300[activeArea1300] && currentInput1300[activeArea1300][fullLabel]) {
+        const savedValue = currentInput1300[activeArea1300][fullLabel];
+        const lines = savedValue.split('\n');
+        const firstLine = lines[0];
+        
+        if (['ERROR', 'NOT_INSTALLED'].includes(firstLine)) {
+            const checkbox = document.querySelector(`input[name="paramStatus1300"][value="${firstLine}"]`);
+            if (checkbox) {
+                checkbox.checked = true;
+                checkbox.closest('.status-chip').classList.add('active');
+                noteContainer.style.display = 'block';
+                noteInput.value = lines[1] || '';
+                
+                if (firstLine === 'NOT_INSTALLED' && valInput) {
+                    valInput.value = '-';
+                    valInput.disabled = true;
+                    valInput.style.opacity = '0.5';
+                }
+            }
+        }
+    }
+}
+
+function save1300Step() {
+    saveCurrent1300StatusToDraft();
+    
+    if (activeIdx1300 < AREAS_1300[activeArea1300].length - 1) {
+        activeIdx1300++;
+        show1300Step();
+    } else {
+        showCustomAlert(`Area ${activeArea1300} selesai diisi!`, 'success');
+        setTimeout(() => {
+            navigateTo('areaList1300Screen');
+            render1300Menu();
+        }, 1500);
+    }
+}
+
+function goBack1300() {
+    saveCurrent1300StatusToDraft();
+    
+    if (activeIdx1300 > 0) {
+        activeIdx1300--;
+        show1300Step();
+    } else {
+        navigateTo('areaList1300Screen');
+        render1300Menu();
+    }
+}
+
+async function send1300ToSheet() {
+    if (!requireAuth()) return;
+    
+    const progress = showUploadProgress('Mengirim Logsheet 1300...');
+    currentUploadController = new AbortController();
+    
+    let allParameters = {};
+    Object.entries(currentInput1300).forEach(([areaName, params]) => {
+        Object.entries(params).forEach(([paramName, value]) => {
+            allParameters[paramName] = value;
+        });
+    });
+    
+    const finalData = {
+        type: 'LOGSHEET_1300', // Tipe Payload khusus Spreadsheet 1300
+        Operator: currentUser ? currentUser.name : 'Unknown',
+        OperatorId: currentUser ? currentUser.id : 'Unknown',
+        ...allParameters
+    };
+    
+    progress.updateText('Menyimpan data ke server...');
+    
+    try {
+        await fetch(GAS_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(finalData),
+            signal: currentUploadController.signal
+        });
+        
+        progress.complete();
+        showCustomAlert('✓ Data Area 1300 berhasil dikirim!', 'success');
+        
+        currentInput1300 = {};
+        localStorage.removeItem(DRAFT_KEYS_1300.LOGSHEET);
+        
+        setTimeout(() => navigateTo('homeScreen'), 1500);
+        
+    } catch (error) {
+        console.error('Error sending 1300 data:', error);
+        progress.error();
+        
+        let offlineData = JSON.parse(localStorage.getItem(DRAFT_KEYS_1300.OFFLINE) || '[]');
+        offlineData.push(finalData);
+        localStorage.setItem(DRAFT_KEYS_1300.OFFLINE, JSON.stringify(offlineData));
+        
+        setTimeout(() => {
+            showCustomAlert('Gagal mengirim. Data 1300 disimpan lokal.', 'error');
+        }, 500);
+    }
+}
