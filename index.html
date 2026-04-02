@@ -876,7 +876,121 @@
             </div>
         </div>
     </div>
+<div id="1300AreaListScreen" class="screen">
+        <div class="screen-header glass-header">
+            <button class="btn-icon" onclick="navigateTo('logsheetSelectScreen')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <div class="header-title-group">
+                <h2>Logsheet Area 1300</h2>
+                <span class="header-subtitle" id="1300ProgressText">0% Complete</span>
+            </div>
+            <div class="user-pill">
+                <span id="1300AreaListUser">-</span>
+            </div>
+        </div>
 
+        <div class="progress-card glass">
+            <div class="progress-header" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-size: 0.875rem; color: #94a3b8;">Overall Progress</span>
+                <span class="progress-value" id="1300OverallPercent" style="font-weight: 700; color: #f59e0b;">0%</span>
+            </div>
+            <div class="progress-bar-bg" style="width: 100%; height: 8px; background: rgba(148, 163, 184, 0.1); border-radius: 9999px; overflow: hidden;">
+                <div class="progress-bar-fill" id="1300OverallProgressBar" style="height: 100%; background: linear-gradient(90deg, #f59e0b, #d97706); width: 0%; transition: width 0.3s ease;"></div>
+            </div>
+        </div>
+
+        <div class="areas-list" id="1300AreaList"></div>
+
+        <button class="btn btn-floating" id="1300SubmitBtn" onclick="send1300ToSheet()" style="display:none; position: fixed; bottom: 32px; left: 24px; right: 24px; padding: 16px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);">
+            <span>📤 Kirim Data 1300</span>
+        </button>
+    </div>
+
+    <div id="1300ParamScreen" class="screen">
+        <div class="screen-header glass-header">
+            <button class="btn-icon" onclick="goBack1300()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <div class="step-badge" style="background: rgba(245, 158, 11, 0.15); padding: 4px 12px; border-radius: 9999px; border: 1px solid rgba(245, 158, 11, 0.2);">
+                <span id="1300StepInfo" style="font-size: 0.875rem; font-weight: 700; color: #f59e0b;">1/10</span>
+            </div>
+            <div class="user-pill">
+                <span id="1300ParamUser">-</span>
+            </div>
+        </div>
+
+        <div class="param-container">
+            <div class="param-card glass">
+                <div class="param-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <span class="param-area" id="1300CurrentAreaName" style="font-size: 0.75rem; font-weight: 700; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.05em;">Area</span>
+                    <span class="param-counter" id="1300AreaProgress" style="padding: 4px 12px; background: rgba(30, 41, 59, 0.8); border-radius: 9999px; font-size: 0.875rem; font-weight: 700; color: #e2e8f0; border: 1px solid rgba(148, 163, 184, 0.2);">1/10</span>
+                </div>
+                
+                <h2 class="param-name" id="1300LabelInput" style="font-size: 1.375rem; font-weight: 700; color: #f8fafc; margin-bottom: 24px; line-height: 1.4;">Parameter Name</h2>
+                
+                <div class="input-box" id="1300MainInputWrapper" style="display: flex; align-items: center; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 16px; overflow: hidden; margin-bottom: 24px; transition: all 0.2s ease;">
+                    <div class="input-field" id="1300InputFieldContainer" style="flex: 1; padding: 12px 16px;">
+                        <input type="text" id="1300ValInput" inputmode="decimal" placeholder="0.00" autocomplete="off" style="width: 100%; background: transparent; border: none; color: #f8fafc; font-size: 1.5rem; font-weight: 700; outline: none;">
+                    </div>
+                    <div class="input-unit" id="1300UnitDisplay" style="padding: 0 16px; background: rgba(245, 158, 11, 0.1); color: #f59e0b; font-weight: 700; font-size: 0.9375rem; border-left: 2px solid rgba(148, 163, 184, 0.2); min-height: 64px; display: flex; align-items: center;">--</div>
+                </div>
+
+                <div class="reference-box" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: rgba(30, 41, 59, 0.6); border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.2);">
+                    <div class="ref-item" style="flex: 1; text-align: center;">
+                        <span class="ref-label" style="display: block; font-size: 0.6875rem; color: #94a3b8; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Nilai Terakhir</span>
+                        <span class="ref-value" id="1300PrevValDisplay" style="display: block; font-size: 1.25rem; font-weight: 700; color: #f59e0b;">--</span>
+                    </div>
+                    <div class="ref-divider" style="width: 1px; height: 40px; background: rgba(148, 163, 184, 0.2);"></div>
+                    <div class="ref-item" style="flex: 1; text-align: center;">
+                        <span class="ref-label" style="display: block; font-size: 0.6875rem; color: #94a3b8; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Update</span>
+                        <span class="ref-value" id="1300LastTimeLabel" style="display: block; font-size: 1.25rem; font-weight: 700; color: #e2e8f0;">--:--</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="status-abnormal-card" id="1300StatusAbnormalCard" style="margin: 16px 0; padding: 16px; background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 16px;">
+                <div class="status-header" style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 700; color: #f59e0b; margin-bottom: 12px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <span>Kondisi Parameter</span>
+                </div>
+                
+                <div class="status-options" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    <label class="status-chip" data-status="ERROR" style="display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: rgba(30, 41, 59, 0.8); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 24px; cursor: pointer; font-size: 0.8125rem; color: #94a3b8; font-weight: 500;">
+                        <input type="checkbox" name="1300ParamStatus" value="ERROR" onchange="handle1300StatusChange(this)" style="display: none;">
+                        <span class="chip-text">⚠️ ALAT RUSAK</span>
+                    </label>
+                    <label class="status-chip" data-status="MAINTENANCE" style="display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: rgba(30, 41, 59, 0.8); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 24px; cursor: pointer; font-size: 0.8125rem; color: #94a3b8; font-weight: 500;">
+                        <input type="checkbox" name="1300ParamStatus" value="MAINTENANCE" onchange="handle1300StatusChange(this)" style="display: none;">
+                        <span class="chip-text">🔧 MAINTENANCE</span>
+                    </label>
+                </div>
+                
+                <div class="status-note" id="1300StatusNoteContainer" style="display: none; margin-top: 12px;">
+                    <input type="text" id="1300StatusNote" placeholder="Keterangan masalah..." style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; color: white; font-size: 0.875rem; outline: none;">
+                </div>
+            </div>
+
+            <div class="param-dots" id="1300ProgressDots" style="display: flex; justify-content: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;"></div>
+
+            <div class="action-bar" style="display: flex; gap: 12px; margin-top: auto;">
+                <button class="btn btn-secondary" onclick="goBack1300()" style="flex: 1; padding: 16px; background: rgba(30, 41, 59, 0.8); color: #e2e8f0; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 12px; font-weight: 600;">
+                    <span>Kembali</span>
+                </button>
+                <button class="btn btn-primary btn-flex" onclick="save1300Step()" style="flex: 1; padding: 16px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; border-radius: 12px; font-weight: 600; box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);">
+                    <span>Simpan & Lanjut</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
     <div id="balancingScreen" class="screen">
         <div class="screen-header glass-header">
             <button class="btn-icon" onclick="navigateTo('homeScreen')">
