@@ -1463,7 +1463,6 @@ function clearCTParamPhotosForArea(areaName) {
 // State variables khusus Area 1300
 let param1300Photos = {};
 let current1300ParamPhoto = null;
-let lastData1300 = {};
 
 function fetchLastData1300() {
     updateStatusIndicator(false);
