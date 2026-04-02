@@ -1460,6 +1460,35 @@ function clearCTParamPhotosForArea(areaName) {
    4. AREA 1300 LOGSHEET FUNCTIONS
    ============================================ */
 
+// State variables khusus Area 1300
+let param1300Photos = {};
+let current1300ParamPhoto = null;
+let lastData1300 = {};
+
+function fetchLastData1300() {
+    updateStatusIndicator(false);
+    const timeout = setTimeout(() => render1300Menu(), 8000);
+    const callbackName = 'jsonp_1300_' + Date.now();
+    
+    window[callbackName] = (data) => {
+        clearTimeout(timeout);
+        lastData1300 = data.success ? data.data : {}; 
+        updateStatusIndicator(true);
+        cleanupJSONP(callbackName);
+        render1300Menu();
+    };
+    
+    const script = document.createElement('script');
+    // Asumsi di GAS backend terdapat handler untuk action=getLast1300
+    script.src = `${GAS_URL}?action=getLast1300&callback=${callbackName}`;
+    script.onerror = () => {
+        clearTimeout(timeout);
+        cleanupJSONP(callbackName);
+        render1300Menu();
+    };
+    document.body.appendChild(script);
+}
+
 function goToLogsheet1300() {
     if (!requireAuth()) return;
     
@@ -1471,7 +1500,7 @@ function goToLogsheet1300() {
     }
     
     navigateTo('areaList1300Screen');
-    render1300Menu();
+    fetchLastData1300(); // Mengambil nilai terakhir sebelum render menu
 }
 
 function render1300Menu() {
@@ -1492,7 +1521,7 @@ function render1300Menu() {
         const hasAbnormal = params.some(paramName => {
             const val = areaData[paramName] || '';
             const firstLine = val.split('\n')[0];
-            return ['ERROR', 'NOT_INSTALLED'].includes(firstLine);
+            return ['ERROR', 'MAINTENANCE', 'NOT_INSTALLED'].includes(firstLine);
         });
         
         if (isCompleted) completedAreas++;
@@ -1533,18 +1562,26 @@ function render1300Menu() {
     
     // Update progress bar
     const percent = Math.round((completedAreas / totalAreas) * 100);
-    document.getElementById('progress1300Text').textContent = `${percent}% Complete`;
-    document.getElementById('overall1300Percent').textContent = `${percent}%`;
-    document.getElementById('overall1300ProgressBar').style.width = `${percent}%`;
+    const progressText = document.getElementById('progress1300Text');
+    const overallPercent = document.getElementById('overall1300Percent');
+    const overallProgressBar = document.getElementById('overall1300ProgressBar');
+    
+    if (progressText) progressText.textContent = `${percent}% Complete`;
+    if (overallPercent) overallPercent.textContent = `${percent}%`;
+    if (overallProgressBar) overallProgressBar.style.width = `${percent}%`;
 }
 
 function open1300Area(areaName) {
     if (!requireAuth()) return;
+    
     activeArea1300 = areaName;
     activeIdx1300 = 0;
     
+    load1300ParamPhotosFromDraft();
     navigateTo('param1300Screen');
-    document.getElementById('currentAreaName1300').textContent = areaName;
+    
+    const currentAreaName = document.getElementById('currentAreaName1300');
+    if (currentAreaName) currentAreaName.textContent = areaName;
     render1300ProgressDots();
     show1300Step();
 }
@@ -1562,10 +1599,14 @@ function render1300ProgressDots() {
         const firstLine = lines[0];
         
         const isFilled = savedValue !== '';
-        const hasIssue = ['ERROR', 'NOT_INSTALLED'].includes(firstLine);
+        const hasIssue = ['ERROR', 'MAINTENANCE', 'NOT_INSTALLED'].includes(firstLine);
         const isActive = i === activeIdx1300;
         
-        let className = isActive ? 'active' : (hasIssue ? 'has-issue' : (isFilled ? 'filled' : ''));
+        let className = '';
+        if (isActive) className = 'active';
+        else if (hasIssue) className = 'has-issue';
+        else if (isFilled) className = 'filled';
+        
         html += `<div class="progress-dot ${className}" onclick="jumpTo1300Step(${i})" title="${hasIssue ? firstLine : ''}"></div>`;
     }
     container.innerHTML = html;
@@ -1582,20 +1623,36 @@ function show1300Step() {
     const fullLabel = AREAS_1300[activeArea1300][activeIdx1300];
     const total = AREAS_1300[activeArea1300].length;
     
-    document.getElementById('stepInfo1300').textContent = `Step ${activeIdx1300 + 1}/${total}`;
-    document.getElementById('areaProgress1300').textContent = `${activeIdx1300 + 1}/${total}`;
+    const stepInfo = document.getElementById('stepInfo1300');
+    const areaProgress = document.getElementById('areaProgress1300');
+    const labelInput = document.getElementById('labelInput1300');
+    const lastTimeLabel = document.getElementById('lastTime1300Label');
+    const prevValDisplay = document.getElementById('prevVal1300Display');
     
-    // Pecah unit dari label "(Kg/cm2)" dsb
+    if (stepInfo) stepInfo.textContent = `Step ${activeIdx1300 + 1}/${total}`;
+    if (areaProgress) areaProgress.textContent = `${activeIdx1300 + 1}/${total}`;
+    
     const nameMatch = fullLabel.split(' (')[0];
     const unitMatch = fullLabel.match(/\(([^)]+)\)/);
     
-    document.getElementById('labelInput1300').textContent = nameMatch;
+    if (labelInput) labelInput.textContent = nameMatch;
+    if (lastTimeLabel) lastTimeLabel.textContent = lastData1300._lastTime || '--:--';
+    
+    let prevVal = lastData1300[fullLabel] || '--';
+    if (prevVal !== '--') {
+        const lines = prevVal.toString().split('\n');
+        const firstLine = lines[0];
+        if (['ERROR', 'MAINTENANCE', 'NOT_INSTALLED'].includes(firstLine)) {
+            prevVal = firstLine + (lines[1] ? ' - ' + lines[1] : '');
+        }
+    }
+    if (prevValDisplay) prevValDisplay.textContent = prevVal;
     
     let currentValue = (currentInput1300[activeArea1300] && currentInput1300[activeArea1300][fullLabel]) || '';
     if (currentValue) {
         const lines = currentValue.split('\n');
         const firstLine = lines[0];
-        if (!['ERROR', 'NOT_INSTALLED'].includes(firstLine)) {
+        if (!['ERROR', 'MAINTENANCE', 'NOT_INSTALLED'].includes(firstLine)) {
             currentValue = firstLine;
         } else {
             currentValue = '';
@@ -1603,18 +1660,23 @@ function show1300Step() {
     }
     
     const inputContainer = document.getElementById('inputFieldContainer1300');
-    inputContainer.innerHTML = `<input type="text" id="valInput1300" inputmode="decimal" placeholder="0.00" value="${currentValue}" autocomplete="off" style="width: 100%; background: transparent; border: none; color: #f8fafc; font-size: 1.5rem; font-weight: 700; outline: none;">`;
+    if (inputContainer) {
+        inputContainer.innerHTML = `<input type="text" id="valInput1300" inputmode="decimal" placeholder="0.00" value="${currentValue}" autocomplete="off" style="width: 100%; background: transparent; border: none; color: #f8fafc; font-size: 1.5rem; font-weight: 700; outline: none;">`;
+    }
     
     const unitDisplay = document.getElementById('unitDisplay1300');
-    if (unitMatch) {
-        unitDisplay.textContent = unitMatch[1];
-        unitDisplay.style.display = 'flex';
-    } else {
-        unitDisplay.style.display = 'none';
+    if (unitDisplay) {
+        if (unitMatch) {
+            unitDisplay.textContent = unitMatch[1];
+            unitDisplay.style.display = 'flex';
+        } else {
+            unitDisplay.style.display = 'none';
+        }
     }
     
     load1300AbnormalStatus(fullLabel);
     render1300ProgressDots();
+    load1300ParamPhotoForCurrentStep();
     
     setTimeout(() => {
         const input = document.getElementById('valInput1300');
@@ -1639,22 +1701,29 @@ function handle1300StatusChange(checkbox) {
     
     if (checkbox.checked) {
         chip.classList.add('active');
-        noteContainer.style.display = 'block';
+        if (noteContainer) noteContainer.style.display = 'block';
+        
+        setTimeout(() => {
+            document.getElementById('statusNote1300')?.focus();
+        }, 100);
         
         if (checkbox.value === 'NOT_INSTALLED' && valInput) {
             valInput.value = '-';
             valInput.disabled = true;
             valInput.style.opacity = '0.5';
+            valInput.style.background = 'rgba(100, 116, 139, 0.2)';
         }
     } else {
         chip.classList.remove('active');
-        noteContainer.style.display = 'none';
-        document.getElementById('statusNote1300').value = '';
+        if (noteContainer) noteContainer.style.display = 'none';
+        const noteInput = document.getElementById('statusNote1300');
+        if (noteInput) noteInput.value = '';
         
         if (valInput) {
             valInput.value = '';
             valInput.disabled = false;
             valInput.style.opacity = '1';
+            valInput.style.background = '';
             valInput.focus();
         }
     }
@@ -1675,7 +1744,11 @@ function saveCurrent1300StatusToDraft() {
     }
     
     if (checkedStatus) {
-        valueToSave = note ? `${checkedStatus.value}\n${note}` : checkedStatus.value;
+        if (note) {
+            valueToSave = `${checkedStatus.value}\n${note}`;
+        } else {
+            valueToSave = checkedStatus.value;
+        }
     }
     
     if (valueToSave) {
@@ -1685,48 +1758,198 @@ function saveCurrent1300StatusToDraft() {
     }
     
     localStorage.setItem(DRAFT_KEYS_1300.LOGSHEET, JSON.stringify(currentInput1300));
+    render1300ProgressDots();
 }
 
 function load1300AbnormalStatus(fullLabel) {
     document.querySelectorAll('input[name="paramStatus1300"]').forEach(cb => {
         cb.checked = false;
-        cb.closest('.status-chip').classList.remove('active');
+        if (cb.closest('.status-chip')) {
+            cb.closest('.status-chip').classList.remove('active');
+        }
     });
     
     const noteContainer = document.getElementById('statusNoteContainer1300');
     const noteInput = document.getElementById('statusNote1300');
     const valInput = document.getElementById('valInput1300');
     
-    noteContainer.style.display = 'none';
-    noteInput.value = '';
+    if (noteContainer) noteContainer.style.display = 'none';
+    if (noteInput) noteInput.value = '';
     
     if (valInput) {
         valInput.disabled = false;
         valInput.style.opacity = '1';
+        valInput.style.background = '';
+        valInput.value = '';
     }
     
     if (currentInput1300[activeArea1300] && currentInput1300[activeArea1300][fullLabel]) {
         const savedValue = currentInput1300[activeArea1300][fullLabel];
         const lines = savedValue.split('\n');
         const firstLine = lines[0];
+        const secondLine = lines[1] || '';
         
-        if (['ERROR', 'NOT_INSTALLED'].includes(firstLine)) {
+        const isStatus = ['ERROR', 'MAINTENANCE', 'NOT_INSTALLED'].includes(firstLine);
+        
+        if (isStatus) {
             const checkbox = document.querySelector(`input[name="paramStatus1300"][value="${firstLine}"]`);
             if (checkbox) {
                 checkbox.checked = true;
                 checkbox.closest('.status-chip').classList.add('active');
-                noteContainer.style.display = 'block';
-                noteInput.value = lines[1] || '';
+                if (noteContainer) noteContainer.style.display = 'block';
+                if (noteInput) noteInput.value = secondLine;
                 
                 if (firstLine === 'NOT_INSTALLED' && valInput) {
                     valInput.value = '-';
                     valInput.disabled = true;
                     valInput.style.opacity = '0.5';
+                    valInput.style.background = 'rgba(100, 116, 139, 0.2)';
                 }
             }
+        } else {
+            if (valInput) valInput.value = savedValue;
         }
     }
 }
+
+// ------------------------------------------------------------------
+// FITUR FOTO VALIDASI AREA 1300
+// ------------------------------------------------------------------
+
+function handle1300ParamPhoto(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (file.size > 10 * 1024 * 1024) {
+        showCustomAlert('Ukuran file terlalu besar (>10MB).', 'error');
+        event.target.value = '';
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const originalDataUrl = e.target.result;
+        showCustomAlert('🔄 Mengkompresi foto...', 'info');
+        
+        try {
+            const result = await compressImage(originalDataUrl, {
+                maxWidth: 1600,
+                maxHeight: 1600,
+                quality: 0.75,
+                type: 'image/jpeg'
+            });
+            
+            current1300ParamPhoto = result.dataUrl;
+            if (!param1300Photos[activeArea1300]) param1300Photos[activeArea1300] = {};
+            const fullLabel = AREAS_1300[activeArea1300][activeIdx1300];
+            param1300Photos[activeArea1300][fullLabel] = current1300ParamPhoto;
+            save1300ParamPhotosToDraft();
+            
+            update1300ParamPhotoPreviewWithInfo(result);
+            showCustomAlert(`✓ Foto: ${result.compressedSize}KB`, 'success');
+            
+        } catch (error) {
+            console.error('Kompresi gagal:', error);
+            current1300ParamPhoto = originalDataUrl;
+            if (!param1300Photos[activeArea1300]) param1300Photos[activeArea1300] = {};
+            const fullLabel = AREAS_1300[activeArea1300][activeIdx1300];
+            param1300Photos[activeArea1300][fullLabel] = current1300ParamPhoto;
+            save1300ParamPhotosToDraft();
+            update1300ParamPhotoPreview();
+        }
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
+}
+
+function update1300ParamPhotoPreview() {
+    const preview = document.getElementById('param1300PhotoPreview');
+    const badge = document.getElementById('param1300PhotoBadge');
+    
+    if (!preview) return;
+    
+    if (current1300ParamPhoto) {
+        preview.innerHTML = `<img src="${current1300ParamPhoto}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;" alt="1300 Parameter Photo">`;
+        if (badge) {
+            badge.textContent = '✓ ADA';
+            badge.classList.add('has-photo');
+        }
+    } else {
+        preview.innerHTML = `
+            <div class="photo-placeholder" style="text-align: center;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #64748b; margin-bottom: 8px;">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                </svg>
+                <div style="color: #64748b;">Belum ada foto</div>
+            </div>
+        `;
+        if (badge) {
+            badge.textContent = 'OPSIONAL';
+            badge.classList.remove('has-photo');
+        }
+    }
+}
+
+function update1300ParamPhotoPreviewWithInfo(result) {
+    const preview = document.getElementById('param1300PhotoPreview');
+    const badge = document.getElementById('param1300PhotoBadge');
+    
+    if (!preview) return;
+    
+    const sizeBadge = `
+        <div style="position: absolute; top: 8px; right: 8px; background: rgba(139, 92, 246, 0.9); color: white; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600;">
+            ${result.compressedSize}KB ↓${result.reduction}%
+        </div>`;
+    
+    preview.innerHTML = `
+        <div style="position: relative; width: 100%; height: 100%;">
+            <img src="${result.dataUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">
+            ${sizeBadge}
+        </div>`;
+    
+    if (badge) {
+        badge.textContent = `✓ ${result.compressedSize}KB`;
+        badge.classList.add('has-photo');
+    }
+}
+
+function load1300ParamPhotoForCurrentStep() {
+    const fullLabel = AREAS_1300[activeArea1300][activeIdx1300];
+    current1300ParamPhoto = param1300Photos[activeArea1300]?.[fullLabel] || null;
+    update1300ParamPhotoPreview();
+}
+
+function save1300ParamPhotosToDraft() {
+    try {
+        localStorage.setItem(PHOTO_DRAFT_KEYS.AREA1300, JSON.stringify(param1300Photos));
+    } catch (e) {
+        console.error('Error saving 1300 param photos:', e);
+    }
+}
+
+function load1300ParamPhotosFromDraft() {
+    try {
+        const saved = localStorage.getItem(PHOTO_DRAFT_KEYS.AREA1300);
+        if (saved) {
+            param1300Photos = JSON.parse(saved);
+        }
+    } catch (e) {
+        console.error('Error loading 1300 param photos:', e);
+        param1300Photos = {};
+    }
+}
+
+function clear1300ParamPhotosForArea(areaName) {
+    if (param1300Photos[areaName]) {
+        delete param1300Photos[areaName];
+        save1300ParamPhotosToDraft();
+    }
+}
+
+// ------------------------------------------------------------------
+// NAVIGATION & SENDING
+// ------------------------------------------------------------------
 
 function save1300Step() {
     saveCurrent1300StatusToDraft();
@@ -1758,7 +1981,8 @@ function goBack1300() {
 async function send1300ToSheet() {
     if (!requireAuth()) return;
     
-    const progress = showUploadProgress('Mengirim Logsheet 1300...');
+    const progress = showUploadProgress('Mengirim Logsheet 1300 & Foto...');
+    progress.updateText('Mengompresi data...');
     currentUploadController = new AbortController();
     
     let allParameters = {};
@@ -1768,14 +1992,54 @@ async function send1300ToSheet() {
         });
     });
     
+    let allPhotos = {};
+    Object.entries(param1300Photos).forEach(([areaName, areaPhotos]) => {
+        Object.entries(areaPhotos).forEach(([paramName, photoData]) => {
+            if (photoData) {
+                allPhotos[`${areaName}__${paramName}`] = photoData;
+            }
+        });
+    });
+    
     const finalData = {
-        type: 'LOGSHEET_1300', // Tipe Payload khusus Spreadsheet 1300
+        type: 'LOGSHEET_1300',
         Operator: currentUser ? currentUser.name : 'Unknown',
         OperatorId: currentUser ? currentUser.id : 'Unknown',
+        photoCount: Object.keys(allPhotos).length,
         ...allParameters
     };
     
-    progress.updateText('Menyimpan data ke server...');
+    // Kirim Foto satu-persatu (Jika ada)
+    if (Object.keys(allPhotos).length > 0) {
+        progress.updateText(`Mengirim ${Object.keys(allPhotos).length} foto...`);
+        
+        for (const [key, photoData] of Object.entries(allPhotos)) {
+            try {
+                const photoPayload = {
+                    type: 'LOGSHEET_PHOTO',
+                    parentType: 'LOGSHEET_1300',
+                    Operator: currentUser ? currentUser.name : 'Unknown',
+                    photoKey: key,
+                    photo: photoData,
+                    timestamp: new Date().toISOString()
+                };
+                
+                await fetch(GAS_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(photoPayload),
+                    signal: currentUploadController.signal
+                });
+                
+                await new Promise(resolve => setTimeout(resolve, 200));
+            } catch (photoError) {
+                console.warn('Error sending 1300 photo:', key, photoError);
+            }
+        }
+    }
+    
+    progress.updateText('Mengirim data parameter 1300...');
     
     try {
         await fetch(GAS_URL, {
@@ -1787,10 +2051,14 @@ async function send1300ToSheet() {
         });
         
         progress.complete();
-        showCustomAlert('✓ Data Area 1300 berhasil dikirim!', 'success');
+        showCustomAlert('✓ Data Area 1300 dan foto berhasil dikirim!', 'success');
         
+        // Bersihkan seluruh state
         currentInput1300 = {};
+        param1300Photos = {};
+        current1300ParamPhoto = null;
         localStorage.removeItem(DRAFT_KEYS_1300.LOGSHEET);
+        localStorage.removeItem(PHOTO_DRAFT_KEYS.AREA1300);
         
         setTimeout(() => navigateTo('homeScreen'), 1500);
         
@@ -1798,12 +2066,13 @@ async function send1300ToSheet() {
         console.error('Error sending 1300 data:', error);
         progress.error();
         
+        // Simpan Offline jika gagal terkirim
         let offlineData = JSON.parse(localStorage.getItem(DRAFT_KEYS_1300.OFFLINE) || '[]');
-        offlineData.push(finalData);
+        offlineData.push({...finalData, photos: allPhotos});
         localStorage.setItem(DRAFT_KEYS_1300.OFFLINE, JSON.stringify(offlineData));
         
         setTimeout(() => {
-            showCustomAlert('Gagal mengirim. Data 1300 disimpan lokal.', 'error');
+            showCustomAlert('Gagal mengirim. Data dan foto disimpan lokal.', 'error');
         }, 500);
     }
 }
