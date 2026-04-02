@@ -50,6 +50,8 @@
 </head>
 <body>
 
+<!-- REPLACE the existing loader div with this: -->
+
 <div id="loader" class="loader-overlay">
     <div class="loader-content">
         <div class="loader-logo">
@@ -59,12 +61,39 @@
             <div class="loader-pulse-ring"></div>
             <div class="loader-pulse-ring delay"></div>
         </div>
+        
         <div class="loader-text">
-            <h3>Utilitas 3B</h3>
-            <p id="loaderStatusText">Sinkronisasi Data...</p>
-            <div class="progress-bar-loader">
-                <div class="fill" id="loaderProgress" style="width: 0%">
-                    <div class="progress-glow"></div>
+            <!-- Typewriter Animation Container -->
+            <div class="typewriter-container">
+                <h3 class="typewriter-text" id="typewriterTitle">
+                    <span class="char" style="--char-index: 0">U</span>
+                    <span class="char" style="--char-index: 1">t</span>
+                    <span class="char" style="--char-index: 2">i</span>
+                    <span class="char" style="--char-index: 3">l</span>
+                    <span class="char" style="--char-index: 4">i</span>
+                    <span class="char" style="--char-index: 5">t</span>
+                    <span class="char" style="--char-index: 6">a</span>
+                    <span class="char" style="--char-index: 7">s</span>
+                    <span class="char space" style="--char-index: 8">&nbsp;</span>
+                    <span class="char highlight" style="--char-index: 9">3</span>
+                    <span class="char highlight" style="--char-index: 10">B</span>
+                    <span class="cursor"></span>
+                </h3>
+            </div>
+            
+            <p class="loader-subtitle" id="loaderStatusText">Memuat sistem...</p>
+            
+            <!-- Premium Progress Bar -->
+            <div class="premium-progress-container">
+                <div class="premium-progress-track">
+                    <div class="premium-progress-fill" id="loaderProgress" style="width: 0%">
+                        <div class="progress-shimmer"></div>
+                        <div class="progress-glow"></div>
+                    </div>
+                </div>
+                <div class="premium-progress-stats">
+                    <span class="progress-percentage" id="loaderPercent">0%</span>
+                    <span class="progress-stage" id="loaderStage">Initializing</span>
                 </div>
             </div>
         </div>
