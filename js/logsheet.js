@@ -1461,8 +1461,8 @@ function clearCTParamPhotosForArea(areaName) {
    ============================================ */
 
 // State variables khusus Area 1300
-let param1300Photos = {};
-let current1300ParamPhoto = null;
+param1300Photos = {};
+current1300ParamPhoto = null;
 
 function fetchLastData1300() {
     updateStatusIndicator(false);
@@ -1951,8 +1951,8 @@ function clear1300ParamPhotosForArea(areaName) {
    ============================================ */
 
 // State variables khusus Area 1100
-let param1100Photos = {};
-let current1100ParamPhoto = null;
+param1100Photos = {};
+current1100ParamPhoto = null;
 
 function fetchLastData1100() {
     updateStatusIndicator(false);
@@ -2672,4 +2672,3 @@ async function send1300ToSheet() {
             showCustomAlert('Gagal mengirim. Data dan foto disimpan lokal.', 'error');
         }, 500);
     }
-}
