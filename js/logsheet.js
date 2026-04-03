@@ -1946,6 +1946,496 @@ function clear1300ParamPhotosForArea(areaName) {
     }
 }
 
+/* ============================================
+   5. AREA 1100 LOGSHEET FUNCTIONS
+   ============================================ */
+
+// State variables khusus Area 1100
+let param1100Photos = {};
+let current1100ParamPhoto = null;
+
+function fetchLastData1100() {
+    updateStatusIndicator(false);
+    const timeout = setTimeout(() => render1100Menu(), 8000);
+    const callbackName = 'jsonp_1100_' + Date.now();
+    
+    window[callbackName] = (data) => {
+        clearTimeout(timeout);
+        lastData1100 = data.success ? data.data : {}; 
+        updateStatusIndicator(true);
+        cleanupJSONP(callbackName);
+        render1100Menu();
+    };
+    
+    const script = document.createElement('script');
+    // Asumsi di GAS backend terdapat handler untuk action=getLast1100
+    script.src = `${GAS_URL}?action=getLast1100&callback=${callbackName}`;
+    script.onerror = () => {
+        clearTimeout(timeout);
+        cleanupJSONP(callbackName);
+        render1100Menu();
+    };
+    document.body.appendChild(script);
+}
+
+function goToLogsheet1100() {
+    if (!requireAuth()) return;
+    
+    try {
+        const saved = localStorage.getItem(DRAFT_KEYS_1100.LOGSHEET);
+        if (saved) currentInput1100 = JSON.parse(saved);
+    } catch (e) {
+        currentInput1100 = {};
+    }
+    
+    navigateTo('areaList1100Screen');
+    fetchLastData1100(); // Mengambil nilai terakhir sebelum render menu
+}
+
+function render1100Menu() {
+    const list = document.getElementById('areaList1100');
+    if (!list) return;
+    
+    const totalAreas = Object.keys(AREAS_1100).length;
+    let completedAreas = 0;
+    let html = '';
+    
+    Object.entries(AREAS_1100).forEach(([areaName, params]) => {
+        const areaData = currentInput1100[areaName] || {};
+        const filled = Object.keys(areaData).length;
+        const total = params.length;
+        const percent = Math.round((filled / total) * 100);
+        const isCompleted = filled === total && total > 0;
+        
+        const hasAbnormal = params.some(paramName => {
+            const val = areaData[paramName] || '';
+            const firstLine = val.split('\n')[0];
+            return ['ERROR', 'MAINTENANCE', 'NOT_INSTALLED'].includes(firstLine);
+        });
+        
+        if (isCompleted) completedAreas++;
+        
+        const circumference = 2 * Math.PI * 18;
+        const strokeDashoffset = circumference - (percent / 100) * circumference;
+        
+        html += `
+            <div class="area-item ${isCompleted ? 'completed' : ''} ${hasAbnormal ? 'has-warning' : ''}" onclick="open1100Area('${areaName}')">
+                <div class="area-progress-ring">
+                    <svg width="40" height="40" viewBox="0 0 40 40">
+                        <circle cx="20" cy="20" r="18" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3"/>
+                        <circle cx="20" cy="20" r="18" fill="none" stroke="${isCompleted ? '#10b981' : '#8b5cf6'}" 
+                                stroke-width="3" stroke-linecap="round" stroke-dasharray="${circumference}" 
+                                stroke-dashoffset="${strokeDashoffset}" transform="rotate(-90 20 20)"/>
+                        <text x="20" y="24" text-anchor="middle" font-size="10" font-weight="bold" fill="${isCompleted ? '#10b981' : '#f8fafc'}">${filled}</text>
+                    </svg>
+                </div>
+                <div class="area-info">
+                    <div class="area-name">${areaName}</div>
+                    <div class="area-meta ${hasAbnormal ? 'warning' : ''}">
+                        ${hasAbnormal ? '⚠️ Ada parameter bermasalah • ' : ''}${filled} dari ${total} parameter
+                    </div>
+                </div>
+                <div class="area-status">
+                    ${hasAbnormal ? '<span style="color: #ef4444; margin-right: 4px;">!</span>' : ''}
+                    ${isCompleted ? '✓' : '❯'}
+                </div>
+            </div>
+        `;
+    });
+    
+    list.innerHTML = html;
+    
+    const hasData = Object.keys(currentInput1100).length > 0;
+    const submitBtn = document.getElementById('submit1100Btn');
+    if (submitBtn) submitBtn.style.display = hasData ? 'flex' : 'none';
+    
+    // Update progress bar
+    const percent = Math.round((completedAreas / totalAreas) * 100);
+    const progressText = document.getElementById('progress1100Text');
+    const overallPercent = document.getElementById('overall1100Percent');
+    const overallProgressBar = document.getElementById('overall1100ProgressBar');
+    
+    if (progressText) progressText.textContent = `${percent}% Complete`;
+    if (overallPercent) overallPercent.textContent = `${percent}%`;
+    if (overallProgressBar) overallProgressBar.style.width = `${percent}%`;
+}
+
+function open1100Area(areaName) {
+    if (!requireAuth()) return;
+    
+    activeArea1100 = areaName;
+    activeIdx1100 = 0;
+    
+    load1100ParamPhotosFromDraft();
+    navigateTo('param1100Screen');
+    
+    const currentAreaName = document.getElementById('currentAreaName1100');
+    if (currentAreaName) currentAreaName.textContent = areaName;
+    render1100ProgressDots();
+    show1100Step();
+}
+
+function render1100ProgressDots() {
+    const container = document.getElementById('progressDots1100');
+    if (!container) return;
+    const total = AREAS_1100[activeArea1100].length;
+    let html = '';
+    
+    for (let i = 0; i < total; i++) {
+        const fullLabel = AREAS_1100[activeArea1100][i];
+        const savedValue = currentInput1100[activeArea1100]?.[fullLabel] || '';
+        const lines = savedValue.split('\n');
+        const firstLine = lines[0];
+        
+        const isFilled = savedValue !== '';
+        const hasIssue = ['ERROR', 'MAINTENANCE', 'NOT_INSTALLED'].includes(firstLine);
+        const isActive = i === activeIdx1100;
+        
+        let className = '';
+        if (isActive) className = 'active';
+        else if (hasIssue) className = 'has-issue';
+        else if (isFilled) className = 'filled';
+        
+        html += `<div class="progress-dot ${className}" onclick="jumpTo1100Step(${i})" title="${hasIssue ? firstLine : ''}"></div>`;
+    }
+    container.innerHTML = html;
+}
+
+function jumpTo1100Step(index) {
+    saveCurrent1100StatusToDraft();
+    activeIdx1100 = index;
+    show1100Step();
+    render1100ProgressDots();
+}
+
+function show1100Step() {
+    const fullLabel = AREAS_1100[activeArea1100][activeIdx1100];
+    const total = AREAS_1100[activeArea1100].length;
+    
+    const stepInfo = document.getElementById('stepInfo1100');
+    const areaProgress = document.getElementById('areaProgress1100');
+    const labelInput = document.getElementById('labelInput1100');
+    const lastTimeLabel = document.getElementById('lastTime1100Label');
+    const prevValDisplay = document.getElementById('prevVal1100Display');
+    
+    if (stepInfo) stepInfo.textContent = `Step ${activeIdx1100 + 1}/${total}`;
+    if (areaProgress) areaProgress.textContent = `${activeIdx1100 + 1}/${total}`;
+    
+    const nameMatch = fullLabel.split(' (')[0];
+    const unitMatch = fullLabel.match(/\(([^)]+)\)/);
+    
+    if (labelInput) labelInput.textContent = nameMatch;
+    if (lastTimeLabel) lastTimeLabel.textContent = lastData1100._lastTime || '--:--';
+    
+    let prevVal = lastData1100[fullLabel] || '--';
+    if (prevVal !== '--') {
+        const lines = prevVal.toString().split('\n');
+        const firstLine = lines[0];
+        if (['ERROR', 'MAINTENANCE', 'NOT_INSTALLED'].includes(firstLine)) {
+            prevVal = firstLine + (lines[1] ? ' - ' + lines[1] : '');
+        }
+    }
+    if (prevValDisplay) prevValDisplay.textContent = prevVal;
+    
+    let currentValue = (currentInput1100[activeArea1100] && currentInput1100[activeArea1100][fullLabel]) || '';
+    if (currentValue) {
+        const lines = currentValue.split('\n');
+        const firstLine = lines[0];
+        if (!['ERROR', 'MAINTENANCE', 'NOT_INSTALLED'].includes(firstLine)) {
+            currentValue = firstLine;
+        } else {
+            currentValue = '';
+        }
+    }
+    
+    const inputContainer = document.getElementById('inputFieldContainer1100');
+    if (inputContainer) {
+        inputContainer.innerHTML = `<input type="text" id="valInput1100" inputmode="decimal" placeholder="0.00" value="${currentValue}" autocomplete="off" style="width: 100%; background: transparent; border: none; color: #f8fafc; font-size: 1.5rem; font-weight: 700; outline: none;">`;
+    }
+    
+    const unitDisplay = document.getElementById('unitDisplay1100');
+    if (unitDisplay) {
+        if (unitMatch) {
+            unitDisplay.textContent = unitMatch[1];
+            unitDisplay.style.display = 'flex';
+        } else {
+            unitDisplay.style.display = 'none';
+        }
+    }
+    
+    load1100AbnormalStatus(fullLabel);
+    render1100ProgressDots();
+    load1100ParamPhotoForCurrentStep();
+    
+    setTimeout(() => {
+        const input = document.getElementById('valInput1100');
+        if (input && !input.disabled) {
+            input.focus();
+            input.select();
+        }
+    }, 100);
+}
+
+function handle1100StatusChange(checkbox) {
+    const chip = checkbox.closest('.status-chip');
+    const noteContainer = document.getElementById('statusNoteContainer1100');
+    const valInput = document.getElementById('valInput1100');
+    
+    document.querySelectorAll('input[name="paramStatus1100"]').forEach(cb => {
+        if (cb !== checkbox) {
+            cb.checked = false;
+            cb.closest('.status-chip').classList.remove('active');
+        }
+    });
+    
+    if (checkbox.checked) {
+        chip.classList.add('active');
+        if (noteContainer) noteContainer.style.display = 'block';
+        
+        setTimeout(() => {
+            document.getElementById('statusNote1100')?.focus();
+        }, 100);
+        
+        if (checkbox.value === 'NOT_INSTALLED' && valInput) {
+            valInput.value = '-';
+            valInput.disabled = true;
+            valInput.style.opacity = '0.5';
+            valInput.style.background = 'rgba(100, 116, 139, 0.2)';
+        }
+    } else {
+        chip.classList.remove('active');
+        if (noteContainer) noteContainer.style.display = 'none';
+        const noteInput = document.getElementById('statusNote1100');
+        if (noteInput) noteInput.value = '';
+        
+        if (valInput) {
+            valInput.value = '';
+            valInput.disabled = false;
+            valInput.style.opacity = '1';
+            valInput.style.background = '';
+            valInput.focus();
+        }
+    }
+    saveCurrent1100StatusToDraft();
+}
+
+function saveCurrent1100StatusToDraft() {
+    const fullLabel = AREAS_1100[activeArea1100][activeIdx1100];
+    const input = document.getElementById('valInput1100');
+    const checkedStatus = document.querySelector('input[name="paramStatus1100"]:checked');
+    const note = document.getElementById('statusNote1100')?.value || '';
+    
+    if (!currentInput1100[activeArea1100]) currentInput1100[activeArea1100] = {};
+    
+    let valueToSave = '';
+    if (input && input.value.trim()) {
+        valueToSave = input.value.trim();
+    }
+    
+    if (checkedStatus) {
+        if (note) {
+            valueToSave = `${checkedStatus.value}\n${note}`;
+        } else {
+            valueToSave = checkedStatus.value;
+        }
+    }
+    
+    if (valueToSave) {
+        currentInput1100[activeArea1100][fullLabel] = valueToSave;
+    } else {
+        delete currentInput1100[activeArea1100][fullLabel];
+    }
+    
+    localStorage.setItem(DRAFT_KEYS_1100.LOGSHEET, JSON.stringify(currentInput1100));
+    render1100ProgressDots();
+}
+
+function load1100AbnormalStatus(fullLabel) {
+    document.querySelectorAll('input[name="paramStatus1100"]').forEach(cb => {
+        cb.checked = false;
+        if (cb.closest('.status-chip')) {
+            cb.closest('.status-chip').classList.remove('active');
+        }
+    });
+    
+    const noteContainer = document.getElementById('statusNoteContainer1100');
+    const noteInput = document.getElementById('statusNote1100');
+    const valInput = document.getElementById('valInput1100');
+    
+    if (noteContainer) noteContainer.style.display = 'none';
+    if (noteInput) noteInput.value = '';
+    
+    if (valInput) {
+        valInput.disabled = false;
+        valInput.style.opacity = '1';
+        valInput.style.background = '';
+        valInput.value = '';
+    }
+    
+    if (currentInput1100[activeArea1100] && currentInput1100[activeArea1100][fullLabel]) {
+        const savedValue = currentInput1100[activeArea1100][fullLabel];
+        const lines = savedValue.split('\n');
+        const firstLine = lines[0];
+        const secondLine = lines[1] || '';
+        
+        const isStatus = ['ERROR', 'MAINTENANCE', 'NOT_INSTALLED'].includes(firstLine);
+        
+        if (isStatus) {
+            const checkbox = document.querySelector(`input[name="paramStatus1100"][value="${firstLine}"]`);
+            if (checkbox) {
+                checkbox.checked = true;
+                checkbox.closest('.status-chip').classList.add('active');
+                if (noteContainer) noteContainer.style.display = 'block';
+                if (noteInput) noteInput.value = secondLine;
+                
+                if (firstLine === 'NOT_INSTALLED' && valInput) {
+                    valInput.value = '-';
+                    valInput.disabled = true;
+                    valInput.style.opacity = '0.5';
+                    valInput.style.background = 'rgba(100, 116, 139, 0.2)';
+                }
+            }
+        } else {
+            if (valInput) valInput.value = savedValue;
+        }
+    }
+}
+
+// ------------------------------------------------------------------
+// FITUR FOTO VALIDASI AREA 1100
+// ------------------------------------------------------------------
+
+function handle1100ParamPhoto(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (file.size > 10 * 1024 * 1024) {
+        showCustomAlert('Ukuran file terlalu besar (>10MB).', 'error');
+        event.target.value = '';
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const originalDataUrl = e.target.result;
+        showCustomAlert('🔄 Mengkompresi foto...', 'info');
+        
+        try {
+            const result = await compressImage(originalDataUrl, {
+                maxWidth: 1600,
+                maxHeight: 1600,
+                quality: 0.75,
+                type: 'image/jpeg'
+            });
+            
+            current1100ParamPhoto = result.dataUrl;
+            if (!param1100Photos[activeArea1100]) param1100Photos[activeArea1100] = {};
+            const fullLabel = AREAS_1100[activeArea1100][activeIdx1100];
+            param1100Photos[activeArea1100][fullLabel] = current1100ParamPhoto;
+            save1100ParamPhotosToDraft();
+            
+            update1100ParamPhotoPreviewWithInfo(result);
+            showCustomAlert(`✓ Foto: ${result.compressedSize}KB`, 'success');
+            
+        } catch (error) {
+            console.error('Kompresi gagal:', error);
+            current1100ParamPhoto = originalDataUrl;
+            if (!param1100Photos[activeArea1100]) param1100Photos[activeArea1100] = {};
+            const fullLabel = AREAS_1100[activeArea1100][activeIdx1100];
+            param1100Photos[activeArea1100][fullLabel] = current1100ParamPhoto;
+            save1100ParamPhotosToDraft();
+            update1100ParamPhotoPreview();
+        }
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
+}
+
+function update1100ParamPhotoPreview() {
+    const preview = document.getElementById('param1100PhotoPreview');
+    const badge = document.getElementById('param1100PhotoBadge');
+    
+    if (!preview) return;
+    
+    if (current1100ParamPhoto) {
+        preview.innerHTML = `<img src="${current1100ParamPhoto}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;" alt="1100 Parameter Photo">`;
+        if (badge) {
+            badge.textContent = '✓ ADA';
+            badge.classList.add('has-photo');
+        }
+    } else {
+        preview.innerHTML = `
+            <div class="photo-placeholder" style="text-align: center;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #64748b; margin-bottom: 8px;">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                </svg>
+                <div style="color: #64748b;">Belum ada foto</div>
+            </div>
+        `;
+        if (badge) {
+            badge.textContent = 'OPSIONAL';
+            badge.classList.remove('has-photo');
+        }
+    }
+}
+
+function update1100ParamPhotoPreviewWithInfo(result) {
+    const preview = document.getElementById('param1100PhotoPreview');
+    const badge = document.getElementById('param1100PhotoBadge');
+    
+    if (!preview) return;
+    
+    const sizeBadge = `
+        <div style="position: absolute; top: 8px; right: 8px; background: rgba(139, 92, 246, 0.9); color: white; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600;">
+            ${result.compressedSize}KB ↓${result.reduction}%
+        </div>`;
+    
+    preview.innerHTML = `
+        <div style="position: relative; width: 100%; height: 100%;">
+            <img src="${result.dataUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">
+            ${sizeBadge}
+        </div>`;
+    
+    if (badge) {
+        badge.textContent = `✓ ${result.compressedSize}KB`;
+        badge.classList.add('has-photo');
+    }
+}
+
+function load1100ParamPhotoForCurrentStep() {
+    const fullLabel = AREAS_1100[activeArea1100][activeIdx1100];
+    current1100ParamPhoto = param1100Photos[activeArea1100]?.[fullLabel] || null;
+    update1100ParamPhotoPreview();
+}
+
+function save1100ParamPhotosToDraft() {
+    try {
+        localStorage.setItem(PHOTO_DRAFT_KEYS.AREA1100, JSON.stringify(param1100Photos));
+    } catch (e) {
+        console.error('Error saving 1100 param photos:', e);
+    }
+}
+
+function load1100ParamPhotosFromDraft() {
+    try {
+        const saved = localStorage.getItem(PHOTO_DRAFT_KEYS.AREA1100);
+        if (saved) {
+            param1100Photos = JSON.parse(saved);
+        }
+    } catch (e) {
+        console.error('Error loading 1100 param photos:', e);
+        param1100Photos = {};
+    }
+}
+
+function clear1100ParamPhotosForArea(areaName) {
+    if (param1100Photos[areaName]) {
+        delete param1100Photos[areaName];
+        save1100ParamPhotosToDraft();
+    }
+}
+
 // ------------------------------------------------------------------
 // NAVIGATION & SENDING
 // ------------------------------------------------------------------
