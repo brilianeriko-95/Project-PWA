@@ -243,7 +243,33 @@ const AREAS_CT = {
         "MT-6521 B STATUS", 
         "MT-6521 C STATUS", 
         "MT-6521 D STATUS"
-    ]
+    ],
+   "COMPRESSOR": [
+                  "C-6701 A STATUS",
+                  "C-6701 A PRESSURE",
+                  "C-6701 A TEMP",
+                  "C-6701 A FLOW",
+                  "C-6701 B STATUS",
+                  "C-6701 B PRESSURE",
+                  "C-6701 B TEMP",
+                  "C-6701 B FLOW",
+                  "C-6702 A STATUS",
+                  "C-6702 A PRESSURE",
+                  "C-6702 A TEMP",
+                  "C-6702 A FLOW",
+                  "C-6702 B STATUS", 
+                  "C-6702 B PRESSURE",
+                  "C-6702 B TEMP",
+                  "C-6702 B FLOW"
+      ],
+   "OLI GEARBOX SA": ["MT-6511 A",
+                      "MT-6511 B", 
+                      "MT-6511 C", 
+                      "MT-6511 D"],
+   "OLI GEARBOX SU": ["MT-6521 A",
+                      "MT-6521 B",
+                      "MT-6521 C",
+                      "MT-6521 D"]
 };
 // Data Area 1300
 const AREAS_1300 = {
