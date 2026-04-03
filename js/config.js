@@ -37,10 +37,16 @@ const DRAFT_KEYS_1300 = {
     OFFLINE: 'offline_1300_logsheets'
 };
 
+const DRAFT_KEYS_1100 = {
+    LOGSHEET: 'draft_logsheet_1100',
+    OFFLINE: 'offline_logsheet_1100'
+};
+
 const PHOTO_DRAFT_KEYS = {
     TURBINE: 'draft_turbine_photos',
     CT: 'draft_ct_photos',
     AREA1300: 'draft_1300_photos'
+    AREA1100: 'draft_photos_1100'
 };
 
 // URL Google Apps Script Backend
@@ -239,7 +245,7 @@ const AREAS_CT = {
         "MT-6521 D STATUS"
     ]
 };
-// Tambahkan di bagian bawah setelah AREAS_CT atau sebelum INPUT_TYPES
+// Data Area 1300
 const AREAS_1300 = {
   "DRYING AIR": [
     "AIR INLET PI-1007-1 (mmAq)",
@@ -333,7 +339,122 @@ const AREAS_1300 = {
     "LEVEL TANK (%)"
   ]
 };
-
+// Data Parameter Area 1100 & 1200
+const AREAS_1100 = {
+  "MOLTEN SULPHUR SYSTEM": [
+    "FLOW FI-1103 (T/h)",
+    "TOTALIZER FQ-1103 (Ton)",
+    "VALVE HCV-1101 (%)",
+    "INLET PI-1001-5 (Kg/cm2)",
+    "PUMP B-1102 A/B/C/D/E (%)",
+    "LP STEAM JACKET TI-1001-16 (°C)"
+  ],
+  "FURNACE AIR SYSTEM": [
+    "DRY AIR INLET PI-1007-2 (Kg/cm2)",
+    "DAMPER G-2 (%)",
+    "PRIMARY AIR PP-1008-4 (Kg/cm2)",
+    "DAMPER G-3 (%)",
+    "SECONDARY AIR PP-1008-3 (mmH2O)"
+  ],
+  "FURNACE GAS OUTLET": [
+    "GAS OUTLET PI-1107-3 (mmH2O)"
+  ],
+  "BLOWER 30-C-1101": [
+    "SUCTION PI-1006-15 (Kg/cm2)",
+    "DISCHARGE PI-1006-13 (Kg/cm2)"
+  ],
+  "WASTE HEAT BOILER (WHB) 30-B-1104": [
+    "HV-1111 (S-3) (%)",
+    "JUG DAMPER HV-1110 (%)",
+    "GAS INLET PI-1107-4 (mmH2O)",
+    "GAS OUTLET PI-1007-4 (mmH2O)",
+    "STEAM DRUM PI-1102-4 (Kg/cm2)",
+    "SATURATED STEAM TI-1002-3 (°C)",
+    "LEVEL GLASS LG-1103-1/2",
+    "LCV-1102 (%)"
+  ],
+  "DRUM & VESSEL": [
+    "30-D-1101 PRESSURE PI-1002-5 (Kg/cm2)",
+    "30-D-1101 LEVEL LI-1110 (%)",
+    "30-D-1102 TEMP TI-1003-6 (°C)"
+  ],
+  "HEAT EXCHANGER (PREHEATER)": [
+    "30-E-1103 PI-1006-22 (Kg/cm2)",
+    "30-E-1103 DP CW-1108 (Kg/cm2)"
+  ],
+  "PUMP 30-P-1103": [
+    "DISCHARGE PI-1006-12 (Kg/cm2)"
+  ],
+  "MPS HEATER 30-E-1102": [
+    "HCV-1102 (%)",
+    "TCV-1103 (%)",
+    "MPS OUTLET TI-1110 (°C)",
+    "MPS OUTLET PI-1002 (Kg/cm2)",
+    "PCV-1103 (%)",
+    "GAS IN PI-1006-5 (mmH2O)",
+    "GAS OUT PI-1007-5 (mmH2O)"
+  ],
+  "LP STEAM HEADER": [
+    "PI-1002-3 (Kg/cm2)",
+    "TI-1002-4 (°C)"
+  ],
+  "LPS 7 KG SYSTEM": [
+    "PI-1107 (Kg/cm2)",
+    "TI-1111 (°C)",
+    "PI-1106 (Kg/cm2)",
+    "TI-1112 (°C)"
+  ],
+  "CONVERTER INLET (30-R-1201)": [
+    "DAMPER G-5 (%)",
+    "GAS IN PP-1008-9 (mmH2O)"
+  ],
+  "BED I": [
+    "GAS IN PI-1007-6B (mmHg)",
+    "GAS OUT PI-1007-6A (mmHg)",
+    "DELTA P (mmHg)"
+  ],
+  "BED II": [
+    "GAS IN PI-1007-6D (mmHg)",
+    "GAS OUT PI-1007-6C (mmHg)",
+    "DELTA P (mmHg)"
+  ],
+  "BED III": [
+    "GAS IN PI-1007-6F (mmHg)",
+    "GAS OUT PI-1007-6E (mmHg)",
+    "DELTA P (mmHg)"
+  ],
+  "BED IV": [
+    "GAS IN PI-1007-6H (mmHg)",
+    "GAS OUT PI-1007-6G (mmHg)",
+    "DELTA P (mmHg)"
+  ],
+  "INTERPASS HEAT EXCHANGER": [
+    "30-E-1202 IN TUBE PI-1008-14 (mmH2O)",
+    "30-E-1202 OUT TUBE PI-1008-16 (mmH2O)",
+    "30-E-1201 IN TUBE PI-1008-18 (mmH2O)",
+    "30-E-1201 OUT TUBE PI-1008-21 (mmH2O)"
+  ],
+  "GAS COOLER & ECONOMIZER": [
+    "30-E-1203 GAS OUT PI-1007-7 (mmH2O)",
+    "DAMPER G-10 (%)",
+    "30-E-1204 GAS IN PP-1008-26 (mmH2O)",
+    "30-E-1204 GAS OUT PI-1007-11 (mmH2O)",
+    "DAMPER G-11 (%)"
+  ],
+  "SHELL SIDE CONTROL": [
+    "30-E-1201 IN SHELL PI-1008-22 (mmH2O)",
+    "30-E-1201 OUT SHELL PP-1008-23 (mmH2O)",
+    "HCV-1201 (%)",
+    "30-E-1202 OUT SHELL PP-1007-9 (mmH2O)",
+    "HCV-1202 (%)"
+  ],
+  "BFW SYSTEM": [
+    "BFW IN 30-E-1204 TI-1114 (°C)",
+    "BFW IN 30-E-1203 TI-1116 (°C)",
+    "BFW OUT 30-E-1203 TI-1115 (°C)",
+    "BFW OUT 30-E-1204 TI-1117 (°C)"
+  ]
+};
 const INPUT_TYPES = {
     PUMP_STATUS: {
         patterns: ['(A/B)', '(ON/OFF)', '(On/Off)', '(Running/Stop)', '(Remote/Running/Stop)'],
