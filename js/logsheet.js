@@ -1108,7 +1108,7 @@ async function sendCTToSheet() {
     const finalData = {
         type: 'LOGSHEET_CT',
         Operator: currentUser ? currentUser.name : 'Unknown',
-        OperatorId: currentUser ? currentUser.id : 'Unknown',
+        OperatorId: currentUser ? currentUser.username : 'Unknown',
         photoCount: Object.keys(allPhotos).length,
         ...allParameters
     };
@@ -2491,7 +2491,7 @@ async function send1100ToSheet() {
     const finalData = {
         type: 'LOGSHEET_1100', // Sesuai dengan skrip GAS nanti
         Operator: currentUser ? currentUser.name : 'Unknown',
-        OperatorId: currentUser ? currentUser.id : 'Unknown',
+        OperatorId: currentUser ? currentUser.username : 'Unknown',
         photoCount: Object.keys(allPhotos).length,
         ...allParameters
     };
@@ -2601,7 +2601,7 @@ async function send1300ToSheet() {
     const finalData = {
         type: 'LOGSHEET_1300',
         Operator: currentUser ? currentUser.name : 'Unknown',
-        OperatorId: currentUser ? currentUser.id : 'Unknown',
+        OperatorId: currentUser ? currentUser.username : 'Unknown',
         photoCount: Object.keys(allPhotos).length,
         ...allParameters
     };
