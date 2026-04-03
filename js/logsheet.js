@@ -497,7 +497,7 @@ async function sendToSheet() {
     const finalData = {
         type: 'LOGSHEET',
         Operator: currentUser ? currentUser.name : 'Unknown',
-        OperatorId: currentUser ? currentUser.id : 'Unknown',
+        OperatorId: currentUser ? currentUser.username : 'Unknown',
         photoCount: Object.keys(allPhotos).length,
         ...allParameters
     };
