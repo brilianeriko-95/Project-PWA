@@ -2672,3 +2672,4 @@ async function send1300ToSheet() {
             showCustomAlert('Gagal mengirim. Data dan foto disimpan lokal.', 'error');
         }, 500);
     }
+   }
