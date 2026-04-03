@@ -63,8 +63,19 @@ let activeArea1300 = null;
 let activeIdx1300 = 0;
 let currentInputType1300 = 'text';
 let lastData1300 = {};
+
 // ============================================
-// 9. PHOTO VALIDATION STATE (TURBINE & CT)
+// 9. 1100 LOGSHEET STATE
+// ============================================
+let activeArea1100 = null;
+let activeIdx1100 = 0;
+let currentInput1100 = {};
+let param1100Photos = {};
+let current1100ParamPhoto = null;
+let lastData1100 = {};
+
+// ============================================
+// 10. PHOTO VALIDATION STATE (TURBINE & CT)
 // ============================================
 // Foto untuk parameter Turbine
 let currentParamPhoto = null;  // Foto yang sedang aktif diambil
