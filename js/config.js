@@ -45,7 +45,7 @@ const DRAFT_KEYS_1100 = {
 const PHOTO_DRAFT_KEYS = {
     TURBINE: 'draft_turbine_photos',
     CT: 'draft_ct_photos',
-    AREA1300: 'draft_1300_photos'
+    AREA1300: 'draft_1300_photos',
     AREA1100: 'draft_photos_1100'
 };
 
