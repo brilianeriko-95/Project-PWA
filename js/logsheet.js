@@ -2437,6 +2437,114 @@ function clear1100ParamPhotosForArea(areaName) {
 }
 
 // ------------------------------------------------------------------
+// NAVIGATION & SENDING AREA 1100
+// ------------------------------------------------------------------
+
+function save1100Step() {
+    saveCurrent1100StatusToDraft();
+    if (activeIdx1100 < AREAS_1100[activeArea1100].length - 1) {
+        activeIdx1100++;
+        show1100Step();
+    } else {
+        showCustomAlert(`Area ${activeArea1100} selesai diisi!`, 'success');
+        setTimeout(() => {
+            navigateTo('areaList1100Screen');
+            render1100Menu();
+        }, 1500);
+    }
+}
+
+function goBack1100() {
+    saveCurrent1100StatusToDraft();
+    if (activeIdx1100 > 0) {
+        activeIdx1100--;
+        show1100Step();
+    } else {
+        navigateTo('areaList1100Screen');
+        render1100Menu();
+    }
+}
+
+async function send1100ToSheet() {
+    if (!requireAuth()) return;
+    
+    const progress = showUploadProgress('Mengirim Logsheet 1100 & Foto...');
+    progress.updateText('Mengompresi data...');
+    currentUploadController = new AbortController();
+    
+    let allParameters = {};
+    Object.entries(currentInput1100).forEach(([areaName, params]) => {
+        Object.entries(params).forEach(([paramName, value]) => {
+            allParameters[paramName] = value;
+        });
+    });
+    
+    let allPhotos = {};
+    Object.entries(param1100Photos).forEach(([areaName, areaPhotos]) => {
+        Object.entries(areaPhotos).forEach(([paramName, photoData]) => {
+            if (photoData) {
+                allPhotos[`${areaName}__${paramName}`] = photoData;
+            }
+        });
+    });
+    
+    const finalData = {
+        type: 'LOGSHEET_1100', // Sesuai dengan skrip GAS nanti
+        Operator: currentUser ? currentUser.name : 'Unknown',
+        OperatorId: currentUser ? currentUser.id : 'Unknown',
+        photoCount: Object.keys(allPhotos).length,
+        ...allParameters
+    };
+    
+    // Kirim Foto
+    if (Object.keys(allPhotos).length > 0) {
+        progress.updateText(`Mengirim ${Object.keys(allPhotos).length} foto...`);
+        for (const [key, photoData] of Object.entries(allPhotos)) {
+            try {
+                const photoPayload = {
+                    type: 'LOGSHEET_PHOTO',
+                    parentType: 'LOGSHEET_1100',
+                    Operator: currentUser ? currentUser.name : 'Unknown',
+                    photoKey: key,
+                    photo: photoData,
+                    timestamp: new Date().toISOString()
+                };
+                await fetch(GAS_URL, {
+                    method: 'POST', mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(photoPayload),
+                    signal: currentUploadController.signal
+                });
+                await new Promise(resolve => setTimeout(resolve, 200));
+            } catch (error) { console.warn('Error:', error); }
+        }
+    }
+    
+    progress.updateText('Mengirim data parameter 1100...');
+    try {
+        await fetch(GAS_URL, {
+            method: 'POST', mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(finalData),
+            signal: currentUploadController.signal
+        });
+        progress.complete();
+        showCustomAlert('✓ Data Area 1100 berhasil dikirim!', 'success');
+        
+        currentInput1100 = {}; param1100Photos = {}; current1100ParamPhoto = null;
+        localStorage.removeItem(DRAFT_KEYS_1100.LOGSHEET);
+        localStorage.removeItem(PHOTO_DRAFT_KEYS.AREA1100);
+        
+        setTimeout(() => navigateTo('homeScreen'), 1500);
+    } catch (error) {
+        progress.error();
+        let offlineData = JSON.parse(localStorage.getItem(DRAFT_KEYS_1100.OFFLINE) || '[]');
+        offlineData.push({...finalData, photos: allPhotos});
+        localStorage.setItem(DRAFT_KEYS_1100.OFFLINE, JSON.stringify(offlineData));
+        setTimeout(() => showCustomAlert('Gagal mengirim. Data disimpan lokal.', 'error'), 500);
+    }
+}
+// ------------------------------------------------------------------
 // NAVIGATION & SENDING
 // ------------------------------------------------------------------
 
